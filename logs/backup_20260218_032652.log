@@ -1,0 +1,52 @@
+════════════════════════════════════════════════
+  Backup iniciado: mié 18 feb 2026 03:27:13 -03
+  Destino: /home/jhonayo/dotfiles
+════════════════════════════════════════════════
+
+[1m[0;36m══ lazydocker ══[0m
+[0;32m[OK][0m    Respaldado: lazydocker/
+
+[1m[0;36m══ nvim ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): nvim/
+
+[1m[0;36m══ htop ══[0m
+[0;32m[OK][0m    Respaldado: htop/
+
+[1m[0;36m══ logid (/etc/logid.cfg) ══[0m
+[0;32m[OK][0m    Respaldado: /etc/logid.cfg
+
+[1m[0;36m══ wezterm ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): wezterm/
+
+[1m[0;36m══ btop ══[0m
+[0;32m[OK][0m    Respaldado: btop/
+
+[1m[0;36m══ solaar ══[0m
+[0;32m[OK][0m    Respaldado: solaar config
+
+[1m[0;36m══ git (.gitconfig + .gitignore_global) ══[0m
+[0;32m[OK][0m    Respaldado: .gitconfig
+[0;32m[OK][0m    Respaldado: .gitignore_global
+
+[1m[0;36m══ lazygit ══[0m
+[0;32m[OK][0m    Respaldado: lazygit/
+
+[1m[0;36m══ zsh (.zshrc + .p10k.zsh) ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): .zshrc
+[0;32m[OK][0m    Symlink activo (ya en repo): .p10k.zsh
+
+[1m[0;36m══ Snapshot del sistema ══[0m
+[0;32m[OK][0m    apt-packages.txt actualizado (107 paquetes)
+[0;32m[OK][0m    java-versions.txt actualizado
+[0;32m[OK][0m    node-versions.txt actualizado
+[0;32m[OK][0m    npm-global.json actualizado
+
+[1m[0;36m══ Git ══[0m
+[0;34m[INFO][0m  Cambios detectados:
+ M scripts/backup.sh
+[main 573d13c] backup: 2026-02-18 03:27 [MacBookPro]
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+[0;32m[OK][0m    Commit: backup: 2026-02-18 03:27 [MacBookPro]
+[0;34m[INFO][0m  Para subir los cambios: cd ~/dotfiles && git push
+[0;34m[INFO][0m  O la próxima vez: bash backup.sh --push
+Backup completado: mié 18 feb 2026 03:27:14 -03

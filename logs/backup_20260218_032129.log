@@ -1,0 +1,74 @@
+════════════════════════════════════════════════
+  Backup iniciado: mié 18 feb 2026 03:22:51 -03
+  Destino: /home/jhonayo/dotfiles
+════════════════════════════════════════════════
+
+[1m[0;36m══ lazydocker ══[0m
+[0;32m[OK][0m    Respaldado: lazydocker/
+
+[1m[0;36m══ nvim ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): nvim/
+
+[1m[0;36m══ htop ══[0m
+[0;32m[OK][0m    Respaldado: htop/
+
+[1m[0;36m══ logid (/etc/logid.cfg) ══[0m
+[0;32m[OK][0m    Respaldado: /etc/logid.cfg
+
+[1m[0;36m══ wezterm ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): wezterm/
+
+[1m[0;36m══ btop ══[0m
+[0;32m[OK][0m    Respaldado: btop/
+
+[1m[0;36m══ solaar ══[0m
+[0;32m[OK][0m    Respaldado: solaar config
+
+[1m[0;36m══ git (.gitconfig + .gitignore_global) ══[0m
+[0;32m[OK][0m    Respaldado: .gitconfig
+[0;32m[OK][0m    Respaldado: .gitignore_global
+
+[1m[0;36m══ lazygit ══[0m
+[0;32m[OK][0m    Respaldado: lazygit/
+
+[1m[0;36m══ zsh (.zshrc + .p10k.zsh) ══[0m
+[0;32m[OK][0m    Symlink activo (ya en repo): .zshrc
+[0;32m[OK][0m    Symlink activo (ya en repo): .p10k.zsh
+
+[1m[0;36m══ Snapshot del sistema ══[0m
+[0;32m[OK][0m    apt-packages.txt actualizado (107 paquetes)
+[0;32m[OK][0m    java-versions.txt actualizado
+[0;32m[OK][0m    node-versions.txt actualizado
+[0;32m[OK][0m    npm-global.json actualizado
+
+[1m[0;36m══ Git ══[0m
+[0;34m[INFO][0m  Cambios detectados:
+ M scripts/install-dependencies.sh
+?? btop/
+?? git/
+?? lazydocker/
+?? lazygit/
+?? mouse/
+?? scripts/backup.sh
+?? scripts/install.sh
+?? system/
+[main cc159d2] backup: 2026-02-18 03:23 [MacBookPro]
+ 14 files changed, 1598 insertions(+)
+ create mode 100644 btop/btop.conf
+ create mode 100644 git/.gitconfig
+ create mode 100644 git/.gitignore_global
+ create mode 100644 lazydocker/config.yml
+ create mode 100644 lazygit/config.yml
+ create mode 100644 mouse/logid.cfg
+ create mode 100644 mouse/solaar-config.yaml
+ create mode 100755 scripts/backup.sh
+ mode change 100644 => 100755 scripts/install-dependencies.sh
+ create mode 100755 scripts/install.sh
+ create mode 100644 system/apt-packages.txt
+ create mode 100644 system/java-versions.txt
+ create mode 100644 system/node-versions.txt
+ create mode 100644 system/npm-global.json
+[0;32m[OK][0m    Commit: backup: 2026-02-18 03:23 [MacBookPro]
+[0;34m[INFO][0m  Para subir los cambios: cd ~/dotfiles && git push
+[0;34m[INFO][0m  O la próxima vez: bash backup.sh --push
+Backup completado: mié 18 feb 2026 03:23:09 -03
