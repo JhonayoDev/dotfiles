@@ -37,7 +37,8 @@ ask_yn() {
   local question="$1"
   local default="${2:-S}"
   while true; do
-    read -r -p "  ${BOLD}${question}${NC} [S/N] (Enter = $default): " yn
+    echo -ne "  ${BOLD}${question}${NC} [S/N] (Enter = $default): "
+    read -r yn
     yn="${yn:-$default}"
     yn="${yn^^}"
     case "$yn" in
@@ -122,7 +123,7 @@ show_detection() {
   echo ""
 
   # Herramientas simples
-  local tools=(nvim zsh wezterm node npm lazygit lazydocker fzf rg bat fd btop htop docker python3 flutter)
+  local tools=(nvim zsh wezterm node npm lazygit lazydocker fzf rg bat fd btop htop docker python3)
   for tool in "${tools[@]}"; do
     if command_exists "$tool"; then
       local ver
@@ -132,6 +133,15 @@ show_detection() {
       echo -e "  ${DIM}✗ $tool — no instalado${NC}"
     fi
   done
+
+  # Flutter — versión se obtiene distinto (lento + formato multilínea)
+  if command_exists flutter; then
+    local flutter_ver
+    flutter_ver=$(flutter --version 2>/dev/null | grep -oP 'Flutter \K[0-9]+\.[0-9]+\.[0-9]+' || echo "instalado")
+    echo -e "  ${GREEN}✓${NC} ${BOLD}flutter${NC}  ${DIM}$flutter_ver${NC}"
+  else
+    echo -e "  ${DIM}✗ flutter — no instalado${NC}"
+  fi
 
   # Java vía SDKMAN
   local java_versions
