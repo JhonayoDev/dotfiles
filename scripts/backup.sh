@@ -25,10 +25,10 @@ DIM='\033[2m'
 NC='\033[0m'
 
 # ─── Utilidades ───────────────────────────────────────────────────────────────
-log() { echo -e "$*" | tee -a "$LOG_FILE"; }
-info() { log "${BLUE}[INFO]${NC}  $*"; }
+log()     { echo -e "$*" | tee -a "$LOG_FILE"; }
+info()    { log "${BLUE}[INFO]${NC}  $*"; }
 success() { log "${GREEN}[OK]${NC}    $*"; }
-warn() { log "${YELLOW}[WARN]${NC}  $*"; }
+warn()    { log "${YELLOW}[WARN]${NC}  $*"; }
 section() { log "\n${BOLD}${CYAN}══ $* ══${NC}"; }
 
 command_exists() { command -v "$1" >/dev/null 2>&1; }
@@ -42,9 +42,9 @@ ask_yn() {
     yn="${yn:-$default}"
     yn="${yn^^}"
     case "$yn" in
-    S | SI | Y | YES) return 0 ;;
-    N | NO) return 1 ;;
-    *) echo -e "  ${RED}Responde S o N.${NC}" ;;
+      S|SI|Y|YES) return 0 ;;
+      N|NO)       return 1 ;;
+      *) echo -e "  ${RED}Responde S o N.${NC}" ;;
     esac
   done
 }
@@ -72,7 +72,7 @@ backup_item() {
 
   mkdir -p "$(dirname "$dest")"
   if [[ -d "$src" ]]; then
-    rsync -a --delete "$src/" "$dest/" >>"$LOG_FILE" 2>&1
+    rsync -a --delete "$src/" "$dest/" >> "$LOG_FILE" 2>&1
   else
     cp -f "$src" "$dest"
   fi
@@ -99,12 +99,12 @@ detect_node_versions() {
 parse_args() {
   for arg in "$@"; do
     case "$arg" in
-    --push) AUTO_PUSH=true ;;
-    --help)
-      echo "Uso: $0 [--push]"
-      echo "  --push   Hace commit y push automáticamente al finalizar"
-      exit 0
-      ;;
+      --push) AUTO_PUSH=true ;;
+      --help)
+        echo "Uso: $0 [--push]"
+        echo "  --push   Hace commit y push automáticamente al finalizar"
+        exit 0
+        ;;
     esac
   done
 }
@@ -150,7 +150,7 @@ show_detection() {
     echo -e "  ${GREEN}✓${NC} ${BOLD}Java (SDKMAN)${NC}"
     while IFS= read -r v; do
       [[ -n "$v" ]] && echo -e "      ${DIM}↳ $v${NC}"
-    done <<<"$java_versions"
+    done <<< "$java_versions"
   fi
 
   # Node vía nvm
@@ -160,7 +160,7 @@ show_detection() {
     echo -e "  ${GREEN}✓${NC} ${BOLD}Node (nvm)${NC}"
     while IFS= read -r v; do
       [[ -n "$v" ]] && echo -e "      ${DIM}↳ $v${NC}"
-    done <<<"$node_versions"
+    done <<< "$node_versions"
   fi
 
   echo ""
@@ -179,6 +179,9 @@ show_detection() {
     ["htop"]="$HOME/.config/htop"
     ["logid (/etc/logid.cfg)"]="/etc/logid.cfg"
     ["solaar"]="$HOME/.config/solaar/config.yaml"
+    ["mpd"]="$HOME/.config/mpd"
+    ["rmpc"]="$HOME/.config/rmpc"
+    ["smb (plantilla)"]="$HOME/dotfiles/smb/.smbcredentials.example"
   )
 
   declare -gA CONFIG_FOUND=()
@@ -209,31 +212,28 @@ select_items_to_backup() {
     read -r -p "  → Elige una opción: " choice
     choice="${choice^^}"
     case "$choice" in
-    1)
-      # Marcar todo lo encontrado como seleccionado
-      declare -gA SELECTED=()
-      for label in "${!CONFIG_FOUND[@]}"; do
-        [[ "${CONFIG_FOUND[$label]}" == true ]] && SELECTED["$label"]=true
-      done
-      break
-      ;;
-    2)
-      declare -gA SELECTED=()
-      echo ""
-      for label in "${!CONFIG_MAP[@]}"; do
-        if [[ "${CONFIG_FOUND[$label]}" == true ]]; then
-          if ask_yn "¿Respaldar $label?"; then
-            SELECTED["$label"]=true
+      1)
+        # Marcar todo lo encontrado como seleccionado
+        declare -gA SELECTED=()
+        for label in "${!CONFIG_FOUND[@]}"; do
+          [[ "${CONFIG_FOUND[$label]}" == true ]] && SELECTED["$label"]=true
+        done
+        break
+        ;;
+      2)
+        declare -gA SELECTED=()
+        echo ""
+        for label in "${!CONFIG_MAP[@]}"; do
+          if [[ "${CONFIG_FOUND[$label]}" == true ]]; then
+            if ask_yn "¿Respaldar $label?"; then
+              SELECTED["$label"]=true
+            fi
           fi
-        fi
-      done
-      break
-      ;;
-    Q)
-      echo "Cancelado."
-      exit 0
-      ;;
-    *) echo -e "  ${RED}Opción inválida.${NC}" ;;
+        done
+        break
+        ;;
+      Q) echo "Cancelado."; exit 0 ;;
+      *) echo -e "  ${RED}Opción inválida.${NC}" ;;
     esac
   done
 }
@@ -249,8 +249,7 @@ show_confirmation() {
   echo ""
 
   if ! ask_yn "¿Confirmar y ejecutar backup?"; then
-    echo "Cancelado."
-    exit 0
+    echo "Cancelado."; exit 0
   fi
 }
 
@@ -268,47 +267,61 @@ run_backup() {
     section "$label"
 
     case "$label" in
-    "zsh (.zshrc + .p10k.zsh)")
-      backup_item "$HOME/.zshrc" "$DOTFILES_DIR/.zshrc" ".zshrc"
-      backup_item "$HOME/.p10k.zsh" "$DOTFILES_DIR/.p10k.zsh" ".p10k.zsh"
-      ;;
-    "git (.gitconfig + .gitignore_global)")
-      backup_item "$HOME/.gitconfig" "$DOTFILES_DIR/git/.gitconfig" ".gitconfig"
-      backup_item "$HOME/.config/git/.gitignore_global" \
-        "$DOTFILES_DIR/git/.gitignore_global" ".gitignore_global"
-      ;;
-    "nvim")
-      backup_item "$HOME/.config/nvim" "$DOTFILES_DIR/.config/nvim" "nvim/"
-      ;;
-    "wezterm")
-      backup_item "$HOME/.config/wezterm" "$DOTFILES_DIR/.config/wezterm" "wezterm/"
-      ;;
-    "lazygit")
-      backup_item "$HOME/.config/lazygit" "$DOTFILES_DIR/lazygit" "lazygit/"
-      ;;
-    "lazydocker")
-      backup_item "$HOME/.config/lazydocker" "$DOTFILES_DIR/lazydocker" "lazydocker/"
-      ;;
-    "btop")
-      backup_item "$HOME/.config/btop" "$DOTFILES_DIR/btop" "btop/"
-      ;;
-    "htop")
-      backup_item "$HOME/.config/htop" "$DOTFILES_DIR/htop" "htop/"
-      ;;
-    "logid (/etc/logid.cfg)")
-      mkdir -p "$DOTFILES_DIR/mouse"
-      sudo cp /etc/logid.cfg "$DOTFILES_DIR/mouse/logid.cfg"
-      success "Respaldado: /etc/logid.cfg"
-      # Timer si existe
-      if [[ -f "/usr/lib/systemd/system/logid.timer" ]]; then
-        sudo cp /usr/lib/systemd/system/logid.timer "$DOTFILES_DIR/mouse/logid.timer"
-        success "Respaldado: logid.timer"
-      fi
-      ;;
-    "solaar")
-      backup_item "$HOME/.config/solaar/config.yaml" \
-        "$DOTFILES_DIR/mouse/solaar-config.yaml" "solaar config"
-      ;;
+      "zsh (.zshrc + .p10k.zsh)")
+        backup_item "$HOME/.zshrc"    "$DOTFILES_DIR/.zshrc"    ".zshrc"
+        backup_item "$HOME/.p10k.zsh" "$DOTFILES_DIR/.p10k.zsh" ".p10k.zsh"
+        ;;
+      "git (.gitconfig + .gitignore_global)")
+        backup_item "$HOME/.gitconfig" "$DOTFILES_DIR/git/.gitconfig" ".gitconfig"
+        backup_item "$HOME/.config/git/.gitignore_global" \
+          "$DOTFILES_DIR/git/.gitignore_global" ".gitignore_global"
+        ;;
+      "nvim")
+        backup_item "$HOME/.config/nvim" "$DOTFILES_DIR/.config/nvim" "nvim/"
+        ;;
+      "wezterm")
+        backup_item "$HOME/.config/wezterm" "$DOTFILES_DIR/.config/wezterm" "wezterm/"
+        ;;
+      "lazygit")
+        backup_item "$HOME/.config/lazygit" "$DOTFILES_DIR/lazygit" "lazygit/"
+        ;;
+      "lazydocker")
+        backup_item "$HOME/.config/lazydocker" "$DOTFILES_DIR/lazydocker" "lazydocker/"
+        ;;
+      "btop")
+        backup_item "$HOME/.config/btop" "$DOTFILES_DIR/btop" "btop/"
+        ;;
+      "htop")
+        backup_item "$HOME/.config/htop" "$DOTFILES_DIR/htop" "htop/"
+        ;;
+      "logid (/etc/logid.cfg)")
+        mkdir -p "$DOTFILES_DIR/mouse"
+        sudo cp /etc/logid.cfg "$DOTFILES_DIR/mouse/logid.cfg"
+        success "Respaldado: /etc/logid.cfg"
+        # Timer si existe
+        if [[ -f "/usr/lib/systemd/system/logid.timer" ]]; then
+          sudo cp /usr/lib/systemd/system/logid.timer "$DOTFILES_DIR/mouse/logid.timer"
+          success "Respaldado: logid.timer"
+        fi
+        ;;
+      "solaar")
+        backup_item "$HOME/.config/solaar/config.yaml" \
+          "$DOTFILES_DIR/mouse/solaar-config.yaml" "solaar config"
+        ;;
+      "mpd")
+        backup_item "$HOME/.config/mpd" "$DOTFILES_DIR/mpd" "mpd/"
+        ;;
+      "rmpc")
+        backup_item "$HOME/.config/rmpc" "$DOTFILES_DIR/rmpc" "rmpc/"
+        ;;
+      "smb (plantilla)")
+        # Solo verifica que la plantilla exista — el archivo real con contraseña NUNCA se respalda
+        if [[ -f "$DOTFILES_DIR/smb/.smbcredentials.example" ]]; then
+          success "Plantilla SMB ya en repo (smb/.smbcredentials.example)"
+        else
+          warn "Plantilla SMB no encontrada en repo."
+        fi
+        ;;
     esac
   done
 
@@ -316,14 +329,14 @@ run_backup() {
   section "Snapshot del sistema"
 
   mkdir -p "$DOTFILES_DIR/system"
-  apt-mark showmanual | sort >"$DOTFILES_DIR/system/apt-packages.txt"
-  success "apt-packages.txt actualizado ($(wc -l <"$DOTFILES_DIR/system/apt-packages.txt") paquetes)"
+  apt-mark showmanual | sort > "$DOTFILES_DIR/system/apt-packages.txt"
+  success "apt-packages.txt actualizado ($(wc -l < "$DOTFILES_DIR/system/apt-packages.txt") paquetes)"
 
   # Versiones de Java instaladas vía SDKMAN
   local java_versions
   java_versions=$(detect_java_versions)
   if [[ -n "$java_versions" ]]; then
-    echo "$java_versions" >"$DOTFILES_DIR/system/java-versions.txt"
+    echo "$java_versions" > "$DOTFILES_DIR/system/java-versions.txt"
     success "java-versions.txt actualizado"
   fi
 
@@ -331,13 +344,13 @@ run_backup() {
   local node_versions
   node_versions=$(detect_node_versions)
   if [[ -n "$node_versions" ]]; then
-    echo "$node_versions" >"$DOTFILES_DIR/system/node-versions.txt"
+    echo "$node_versions" > "$DOTFILES_DIR/system/node-versions.txt"
     success "node-versions.txt actualizado"
   fi
 
   # npm paquetes globales
   if command_exists npm; then
-    npm list -g --depth=0 --json >"$DOTFILES_DIR/system/npm-global.json" 2>/dev/null || true
+    npm list -g --depth=0 --json > "$DOTFILES_DIR/system/npm-global.json" 2>/dev/null || true
     success "npm-global.json actualizado"
   fi
 }
@@ -360,11 +373,11 @@ git_commit_push() {
 
   git add -A
   local msg="backup: $(date '+%Y-%m-%d %H:%M') [$(hostname)]"
-  git commit -m "$msg" >>"$LOG_FILE" 2>&1
+  git commit -m "$msg" >> "$LOG_FILE" 2>&1
   success "Commit: $msg"
 
   if [[ "$AUTO_PUSH" == true ]]; then
-    git push >>"$LOG_FILE" 2>&1
+    git push >> "$LOG_FILE" 2>&1
     success "Push completado."
   else
     echo ""
