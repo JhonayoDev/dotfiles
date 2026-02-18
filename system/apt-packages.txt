@@ -4,6 +4,7 @@ broadcom-sta-dkms
 bsdutils
 btop
 ca-certificates
+cifs-utils
 clang
 cmake
 containerd.io
@@ -68,6 +69,8 @@ luarocks
 m17n-db
 mbpfan
 mesa-utils
+mpc
+mpd
 mysql-workbench-community
 ncurses-base
 ncurses-bin
@@ -85,6 +88,7 @@ python3-pyqt5
 ripgrep
 shim-signed
 skanlite
+smbclient
 solaar
 sshfs
 tesseract-ocr
