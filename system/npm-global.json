@@ -1,0 +1,17 @@
+{
+  "name": "lib",
+  "dependencies": {
+    "corepack": {
+      "version": "0.34.0",
+      "overridden": false
+    },
+    "neovim": {
+      "version": "5.4.0",
+      "overridden": false
+    },
+    "npm": {
+      "version": "10.9.3",
+      "overridden": false
+    }
+  }
+}
