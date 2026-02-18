@@ -28,11 +28,11 @@ DIM='\033[2m'
 NC='\033[0m'
 
 # ─── Utilidades ───────────────────────────────────────────────────────────────
-log()     { echo -e "$*" | tee -a "$LOG_FILE"; }
-info()    { log "${BLUE}[INFO]${NC}  $*"; }
+log() { echo -e "$*" | tee -a "$LOG_FILE"; }
+info() { log "${BLUE}[INFO]${NC}  $*"; }
 success() { log "${GREEN}[OK]${NC}    $*"; }
-warn()    { log "${YELLOW}[WARN]${NC}  $*"; }
-error()   { log "${RED}[ERROR]${NC} $*"; }
+warn() { log "${YELLOW}[WARN]${NC}  $*"; }
+error() { log "${RED}[ERROR]${NC} $*"; }
 section() {
   log ""
   log "${BOLD}${CYAN}╔══════════════════════════════════════════╗${NC}"
@@ -54,7 +54,7 @@ ask_choice() {
   echo ""
   echo -e "  ${BOLD}${question}${NC}"
   for i in "${!options[@]}"; do
-    echo -e "    ${CYAN}[$((i+1))]${NC} ${options[$i]}"
+    echo -e "    ${CYAN}[$((i + 1))]${NC} ${options[$i]}"
   done
   echo -e "    ${CYAN}[S]${NC} Omitir esta sección"
   echo -e "    ${CYAN}[Q]${NC} Salir del script"
@@ -62,7 +62,7 @@ ask_choice() {
 
   while true; do
     read -r -p "  → Elige una opción: " choice
-    choice="${choice^^}"  # a mayúsculas
+    choice="${choice^^}" # a mayúsculas
 
     if [[ "$choice" == "Q" ]]; then
       log "\nInstalación cancelada por el usuario."
@@ -72,9 +72,9 @@ ask_choice() {
       return
     fi
 
-    if [[ "$choice" =~ ^[0-9]+$ ]] && \
-       (( choice >= 1 && choice <= ${#options[@]} )); then
-      REPLY_CHOICE="${options[$((choice-1))]}"
+    if [[ "$choice" =~ ^[0-9]+$ ]] &&
+      ((choice >= 1 && choice <= ${#options[@]})); then
+      REPLY_CHOICE="${options[$((choice - 1))]}"
       return
     fi
 
@@ -85,15 +85,14 @@ ask_choice() {
 # Pregunta simple S/N
 ask_yn() {
   local question="$1"
-  local default="${2:-S}"  # S por defecto
+  local default="${2:-S}" # S por defecto
   while true; do
-    read -r -p "  ${BOLD}${question}${NC} [S/N] (Enter = $default): " yn
-    yn="${yn:-$default}"
+    read -r -p "  $(echo -e "${BOLD}${question}${NC}") [S/N] (Enter = $default): " yn
     yn="${yn^^}"
     case "$yn" in
-      S|SI|Y|YES) return 0 ;;
-      N|NO)       return 1 ;;
-      *) echo -e "  ${RED}Responde S o N.${NC}" ;;
+    S | SI | Y | YES) return 0 ;;
+    N | NO) return 1 ;;
+    *) echo -e "  ${RED}Responde S o N.${NC}" ;;
     esac
   done
 }
@@ -145,7 +144,7 @@ setup() {
 
 # ─── 1. Paquetes apt ──────────────────────────────────────────────────────────
 install_apt_packages() {
-  section "1/11 · Paquetes del sistema (apt)"
+  section "1/12 · Paquetes del sistema (apt)"
 
   local packages=(
     git curl wget unzip xclip build-essential ca-certificates gnupg lsb-release
@@ -165,7 +164,8 @@ install_apt_packages() {
   cmd_preview "sudo apt-get update && sudo apt-get install -y <paquetes>"
 
   if ! ask_yn "¿Instalar paquetes base del sistema?"; then
-    info "Omitiendo paquetes apt."; return
+    info "Omitiendo paquetes apt."
+    return
   fi
 
   sudo apt-get update -qq
@@ -174,7 +174,7 @@ install_apt_packages() {
       success "$pkg ya instalado."
     else
       info "Instalando $pkg..."
-      sudo apt-get install -y "$pkg" >> "$LOG_FILE" 2>&1
+      sudo apt-get install -y "$pkg" >>"$LOG_FILE" 2>&1
       success "$pkg instalado."
     fi
   done
@@ -194,7 +194,7 @@ install_apt_packages() {
 
 # ─── 2. Docker ────────────────────────────────────────────────────────────────
 install_docker() {
-  section "2/11 · Docker CE"
+  section "2/12 · Docker CE"
 
   if command_exists docker; then
     success "Docker ya instalado: $(docker --version)"
@@ -207,28 +207,29 @@ install_docker() {
   cmd_preview "Agregar repo oficial → sudo apt-get install docker-ce docker-ce-cli ..."
 
   if ! ask_yn "¿Instalar Docker CE?"; then
-    info "Omitiendo Docker."; return
+    info "Omitiendo Docker."
+    return
   fi
 
   for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
-    sudo apt-get remove -y "$pkg" >> "$LOG_FILE" 2>&1 || true
+    sudo apt-get remove -y "$pkg" >>"$LOG_FILE" 2>&1 || true
   done
 
   sudo install -m 0755 -d /etc/apt/keyrings
   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-    -o /etc/apt/keyrings/docker.asc >> "$LOG_FILE" 2>&1
+    -o /etc/apt/keyrings/docker.asc >>"$LOG_FILE" 2>&1
   sudo chmod a+r /etc/apt/keyrings/docker.asc
 
   echo \
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
     https://download.docker.com/linux/ubuntu \
-    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" |
+    sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
-  sudo apt-get update -qq >> "$LOG_FILE" 2>&1
+  sudo apt-get update -qq >>"$LOG_FILE" 2>&1
   sudo apt-get install -y \
     docker-ce docker-ce-cli containerd.io \
-    docker-buildx-plugin docker-compose-plugin >> "$LOG_FILE" 2>&1
+    docker-buildx-plugin docker-compose-plugin >>"$LOG_FILE" 2>&1
 
   sudo usermod -aG docker "$USER"
   success "Docker instalado. Cierra sesión y vuelve a entrar para usarlo sin sudo."
@@ -236,7 +237,7 @@ install_docker() {
 
 # ─── 3. WezTerm ───────────────────────────────────────────────────────────────
 install_wezterm() {
-  section "3/11 · WezTerm"
+  section "3/12 · WezTerm"
 
   if command_exists wezterm; then
     success "WezTerm ya instalado: $(wezterm --version)"
@@ -247,21 +248,22 @@ install_wezterm() {
   cmd_preview "curl repo | sudo apt-get install wezterm"
 
   if ! ask_yn "¿Instalar WezTerm?"; then
-    info "Omitiendo WezTerm."; return
+    info "Omitiendo WezTerm."
+    return
   fi
 
-  curl -fsSL https://apt.fury.io/wezfurlong/gpg-fury.key \
-    | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg >> "$LOG_FILE" 2>&1
-  echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wezfurlong/ * *' \
-    | sudo tee /etc/apt/sources.list.d/wezterm.list > /dev/null
-  sudo apt-get update -qq >> "$LOG_FILE" 2>&1
-  sudo apt-get install -y wezterm >> "$LOG_FILE" 2>&1
+  curl -fsSL https://apt.fury.io/wezfurlong/gpg-fury.key |
+    sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg >>"$LOG_FILE" 2>&1
+  echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wezfurlong/ * *' |
+    sudo tee /etc/apt/sources.list.d/wezterm.list >/dev/null
+  sudo apt-get update -qq >>"$LOG_FILE" 2>&1
+  sudo apt-get install -y wezterm >>"$LOG_FILE" 2>&1
   success "WezTerm instalado."
 }
 
 # ─── 4. Zsh + OMZ + P10k ──────────────────────────────────────────────────────
 install_zsh() {
-  section "4/11 · Zsh + Oh My Zsh + Powerlevel10k + plugins"
+  section "4/12 · Zsh + Oh My Zsh + Powerlevel10k + plugins"
 
   echo -e "  Instalará:"
   echo -e "  ${DIM}- Oh My Zsh${NC}"
@@ -271,13 +273,14 @@ install_zsh() {
   echo ""
 
   if ! ask_yn "¿Instalar Zsh / Oh My Zsh?"; then
-    info "Omitiendo zsh."; return
+    info "Omitiendo zsh."
+    return
   fi
 
   if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     info "Instalando Oh My Zsh..."
     cmd_preview 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh) --unattended"'
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh) --unattended" >> "$LOG_FILE" 2>&1
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh) --unattended" >>"$LOG_FILE" 2>&1
     success "Oh My Zsh instalado."
   else
     success "Oh My Zsh ya instalado."
@@ -289,7 +292,7 @@ install_zsh() {
     info "Instalando Powerlevel10k..."
     cmd_preview "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ..."
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-      "$ZSH_CUSTOM/themes/powerlevel10k" >> "$LOG_FILE" 2>&1
+      "$ZSH_CUSTOM/themes/powerlevel10k" >>"$LOG_FILE" 2>&1
     success "Powerlevel10k instalado."
   else
     success "Powerlevel10k ya instalado."
@@ -304,7 +307,7 @@ install_zsh() {
     local dir="$ZSH_CUSTOM/plugins/$name"
     if [[ ! -d "$dir" ]]; then
       info "Instalando plugin $name..."
-      git clone --depth=1 "${plugins[$name]}" "$dir" >> "$LOG_FILE" 2>&1
+      git clone --depth=1 "${plugins[$name]}" "$dir" >>"$LOG_FILE" 2>&1
       success "Plugin instalado: $name"
     else
       success "Plugin ya instalado: $name"
@@ -321,7 +324,7 @@ install_zsh() {
 
 # ─── 5. Fuentes Meslo ─────────────────────────────────────────────────────────
 install_fonts() {
-  section "5/11 · Fuentes MesloLGS NF (requeridas por Powerlevel10k)"
+  section "5/12 · Fuentes MesloLGS NF (requeridas por Powerlevel10k)"
 
   local FONTS_DIR="$HOME/.local/share/fonts"
   local already=true
@@ -344,7 +347,8 @@ install_fonts() {
   cmd_preview "wget powerlevel10k-media/MesloLGS*.ttf → fc-cache -fv"
 
   if ! ask_yn "¿Instalar fuentes MesloLGS NF?"; then
-    info "Omitiendo fuentes."; return
+    info "Omitiendo fuentes."
+    return
   fi
 
   mkdir -p "$FONTS_DIR"
@@ -352,16 +356,16 @@ install_fonts() {
   for local_name in "${!fonts[@]}"; do
     if [[ ! -f "$FONTS_DIR/$local_name" ]]; then
       info "Descargando $local_name..."
-      wget -q "$base/${fonts[$local_name]}" -O "$FONTS_DIR/$local_name" >> "$LOG_FILE" 2>&1
+      wget -q "$base/${fonts[$local_name]}" -O "$FONTS_DIR/$local_name" >>"$LOG_FILE" 2>&1
     fi
   done
-  fc-cache -fv >> "$LOG_FILE" 2>&1
+  fc-cache -fv >>"$LOG_FILE" 2>&1
   success "Fuentes instaladas. Configura WezTerm con: MesloLGS Nerd Font Mono"
 }
 
 # ─── 6. Node.js ───────────────────────────────────────────────────────────────
 install_node() {
-  section "6/11 · Node.js (nvm)"
+  section "6/12 · Node.js (nvm)"
 
   if command_exists node; then
     success "Node.js ya instalado: $(node --version)"
@@ -373,24 +377,25 @@ install_node() {
   cmd_preview "nvm install --lts && nvm alias default node"
 
   if ! ask_yn "¿Instalar Node.js via nvm?"; then
-    info "Omitiendo Node.js."; return
+    info "Omitiendo Node.js."
+    return
   fi
 
-  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh" \
-    | bash >> "$LOG_FILE" 2>&1
+  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh" |
+    bash >>"$LOG_FILE" 2>&1
 
   export NVM_DIR="$HOME/.nvm"
   # shellcheck source=/dev/null
   [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
-  nvm install --lts >> "$LOG_FILE" 2>&1
-  nvm alias default node >> "$LOG_FILE" 2>&1
+  nvm install --lts >>"$LOG_FILE" 2>&1
+  nvm alias default node >>"$LOG_FILE" 2>&1
   success "Node.js instalado: $(node --version 2>/dev/null || echo 'reinicia shell para ver versión')"
 }
 
 # ─── 7. Java (SDKMAN) ─────────────────────────────────────────────────────────
 install_java() {
-  section "7/11 · Java (SDKMAN)"
+  section "7/12 · Java (SDKMAN)"
 
   # Instalar SDKMAN si no existe
   if [[ ! -d "$HOME/.sdkman" ]]; then
@@ -398,17 +403,29 @@ install_java() {
     cmd_preview 'curl -s "https://get.sdkman.io" | bash'
 
     if ! ask_yn "¿Instalar SDKMAN?"; then
-      info "Omitiendo SDKMAN y Java."; return
+      info "Omitiendo SDKMAN y Java."
+      return
     fi
 
-    curl -s "https://get.sdkman.io" | bash >> "$LOG_FILE" 2>&1
+    curl -s "https://get.sdkman.io" | bash >>"$LOG_FILE" 2>&1
     success "SDKMAN instalado."
   else
     success "SDKMAN ya instalado."
   fi
 
   # shellcheck source=/dev/null
-  [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+  #[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+  # shellcheck source=/dev/null
+  # SDKMAN verifica ZSH_VERSION internamente — desactivar set -u temporalmente
+  # para evitar el error "variable sin asignar" al correr desde bash o zsh
+  _load_sdkman() {
+    if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+      set +u
+      source "$HOME/.sdkman/bin/sdkman-init.sh" 2>/dev/null || true
+      set -u
+    fi
+  }
+  _load_sdkman
 
   # Preguntar qué versiones instalar
   echo ""
@@ -425,37 +442,51 @@ install_java() {
     read -r -p "  → Elige una opción: " java_choice
     java_choice="${java_choice^^}"
     case "$java_choice" in
-      1) versions_to_install=("$JAVA_VERSION_21" "$JAVA_VERSION_17"); break ;;
-      2) versions_to_install=("$JAVA_VERSION_21"); break ;;
-      3) versions_to_install=("$JAVA_VERSION_17"); break ;;
-      4)
-        info "Ejecutando: sdk list java"
-        sdk list java 2>/dev/null | head -60 || true
-        echo ""
-        read -r -p "  → Ingresa el identificador exacto (ej: 21.0.8-tem): " custom_ver
-        versions_to_install=("$custom_ver")
-        break
-        ;;
-      S) info "Omitiendo Java."; return ;;
-      *) echo -e "  ${RED}Opción inválida.${NC}" ;;
+    1)
+      versions_to_install=("$JAVA_VERSION_21" "$JAVA_VERSION_17")
+      break
+      ;;
+    2)
+      versions_to_install=("$JAVA_VERSION_21")
+      break
+      ;;
+    3)
+      versions_to_install=("$JAVA_VERSION_17")
+      break
+      ;;
+    4)
+      info "Ejecutando: sdk list java"
+      sdk list java 2>/dev/null | head -60 || true
+      echo ""
+      read -r -p "  → Ingresa el identificador exacto (ej: 21.0.8-tem): " custom_ver
+      versions_to_install=("$custom_ver")
+      break
+      ;;
+    S)
+      info "Omitiendo Java."
+      return
+      ;;
+    *) echo -e "  ${RED}Opción inválida.${NC}" ;;
     esac
   done
 
   for version in "${versions_to_install[@]}"; do
     info "Instalando Java $version..."
     cmd_preview "sdk install java $version"
-    sdk install java "$version" < /dev/null >> "$LOG_FILE" 2>&1
+    # Recargar SDKMAN por si la función sdk no está disponible en este scope
+    command -v sdk &>/dev/null || _load_sdkman
+    sdk install java "$version" </dev/null >>"$LOG_FILE" 2>&1
     success "Java $version instalado."
   done
 
   # El primero de la lista es el default
-  sdk default java "${versions_to_install[0]}" >> "$LOG_FILE" 2>&1
+  sdk default java "${versions_to_install[0]}" >>"$LOG_FILE" 2>&1
   success "Java default: ${versions_to_install[0]}"
 }
 
 # ─── 8. Lazygit + Lazydocker ──────────────────────────────────────────────────
 install_lazy_tools() {
-  section "8/11 · Lazygit + Lazydocker"
+  section "8/12 · Lazygit + Lazydocker"
 
   local install_lg=false
   local install_ld=false
@@ -480,12 +511,12 @@ install_lazy_tools() {
   if [[ "$install_lg" == true ]]; then
     info "Instalando lazygit..."
     local VERSION
-    VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
-      | grep -Po '"tag_name": "v\K[^"]*')
+    VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" |
+      grep -Po '"tag_name": "v\K[^"]*')
     curl -Lo /tmp/lazygit.tar.gz \
       "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${VERSION}_Linux_x86_64.tar.gz" \
-      >> "$LOG_FILE" 2>&1
-    tar -xf /tmp/lazygit.tar.gz -C /tmp lazygit >> "$LOG_FILE" 2>&1
+      >>"$LOG_FILE" 2>&1
+    tar -xf /tmp/lazygit.tar.gz -C /tmp lazygit >>"$LOG_FILE" 2>&1
     sudo install /tmp/lazygit /usr/local/bin/lazygit
     rm -f /tmp/lazygit /tmp/lazygit.tar.gz
     success "lazygit instalado."
@@ -493,15 +524,15 @@ install_lazy_tools() {
 
   if [[ "$install_ld" == true ]]; then
     info "Instalando lazydocker..."
-    curl -s https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh \
-      | bash >> "$LOG_FILE" 2>&1
+    curl -s https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh |
+      bash >>"$LOG_FILE" 2>&1
     success "lazydocker instalado."
   fi
 }
 
 # ─── 9. LogiOps ───────────────────────────────────────────────────────────────
 install_logid() {
-  section "9/11 · LogiOps — MX Master 3S"
+  section "9/12 · LogiOps — MX Master 3S"
 
   echo -e "  LogiOps se instala compilando desde código fuente."
   echo -e "  También configurará un ${BOLD}timer de 10s al boot${NC} para que el"
@@ -520,18 +551,19 @@ install_logid() {
     cmd_preview "git clone https://github.com/PixlOne/logiops"
     cmd_preview "cd logiops/build && cmake .. && make && sudo make install"
     if ! ask_yn "¿Compilar e instalar logid? (tarda ~3 minutos)"; then
-      info "Omitiendo logid."; return
+      info "Omitiendo logid."
+      return
     fi
   fi
 
   info "Clonando logiops..."
-  git clone https://github.com/PixlOne/logiops /tmp/logiops >> "$LOG_FILE" 2>&1
+  git clone https://github.com/PixlOne/logiops /tmp/logiops >>"$LOG_FILE" 2>&1
   mkdir -p /tmp/logiops/build
   cd /tmp/logiops/build
   info "Compilando (cmake + make)..."
-  cmake .. >> "$LOG_FILE" 2>&1
-  make >> "$LOG_FILE" 2>&1
-  sudo make install >> "$LOG_FILE" 2>&1
+  cmake .. >>"$LOG_FILE" 2>&1
+  make >>"$LOG_FILE" 2>&1
+  sudo make install >>"$LOG_FILE" 2>&1
   cd "$DOTFILES_DIR"
   rm -rf /tmp/logiops
   success "logid compilado e instalado en /usr/local/bin/logid"
@@ -559,7 +591,7 @@ _restore_logid_config() {
     sudo cp "$timer_src" "$timer_dest"
   else
     info "Creando logid.timer (OnBootSec=10s)..."
-    sudo tee "$timer_dest" > /dev/null << 'EOF'
+    sudo tee "$timer_dest" >/dev/null <<'EOF'
 [Unit]
 Description=Run logid on boot with delay
 
@@ -571,9 +603,9 @@ WantedBy=timers.target
 EOF
   fi
 
-  sudo systemctl disable logid.service >> "$LOG_FILE" 2>&1 || true
-  sudo systemctl enable logid.timer >> "$LOG_FILE" 2>&1
-  sudo systemctl start logid.service >> "$LOG_FILE" 2>&1
+  sudo systemctl disable logid.service >>"$LOG_FILE" 2>&1 || true
+  sudo systemctl enable logid.timer >>"$LOG_FILE" 2>&1
+  sudo systemctl start logid.service >>"$LOG_FILE" 2>&1
   success "logid activo ahora y configurado con timer al boot."
 
   # Restaurar config de Solaar
@@ -614,7 +646,7 @@ install_flutter() {
 
 # ─── 12. MPD + rmpc ──────────────────────────────────────────────────────────
 install_mpd_rmpc() {
-  section "12/12 · MPD + rmpc"
+  section "11/12 · MPD + rmpc"
 
   echo -e "  MPD (Music Player Daemon) se instalará vía apt en modo usuario."
   echo -e "  rmpc (cliente TUI moderno) se descargará desde GitHub releases."
@@ -626,11 +658,11 @@ install_mpd_rmpc() {
   else
     cmd_preview "sudo apt-get install -y mpd mpc"
     if ask_yn "¿Instalar MPD?"; then
-      sudo apt-get install -y mpd mpc >> "$LOG_FILE" 2>&1
+      sudo apt-get install -y mpd mpc >>"$LOG_FILE" 2>&1
 
       # Deshabilitar el servicio global (usaremos sesión de usuario)
-      sudo systemctl disable mpd.service >> "$LOG_FILE" 2>&1 || true
-      sudo systemctl stop    mpd.service >> "$LOG_FILE" 2>&1 || true
+      sudo systemctl disable mpd.service >>"$LOG_FILE" 2>&1 || true
+      sudo systemctl stop mpd.service >>"$LOG_FILE" 2>&1 || true
       success "MPD instalado. Servicio global deshabilitado (se usará en modo usuario)."
     else
       info "Omitiendo MPD."
@@ -649,7 +681,7 @@ install_mpd_rmpc() {
   elif command_exists mpd; then
     if ask_yn "¿Generar mpd.conf mínimo en dotfiles/mpd/?"; then
       mkdir -p "$mpd_repo"
-      cat > "$mpd_cfg" << 'EOF'
+      cat >"$mpd_cfg" <<'EOF'
 # dotfiles/mpd/mpd.conf
 # Enlazado desde ~/.config/mpd/mpd.conf
 #
@@ -684,8 +716,8 @@ EOF
   # ── Servicio MPD en modo usuario ──
   if command_exists mpd && [[ -f "$mpd_cfg" ]]; then
     if ask_yn "¿Habilitar mpd como servicio de usuario (systemd --user)?"; then
-      systemctl --user enable mpd >> "$LOG_FILE" 2>&1 || true
-      systemctl --user start  mpd >> "$LOG_FILE" 2>&1 || true
+      systemctl --user enable mpd >>"$LOG_FILE" 2>&1 || true
+      systemctl --user start mpd >>"$LOG_FILE" 2>&1 || true
       success "mpd.service (usuario) habilitado e iniciado."
     fi
   fi
@@ -700,16 +732,17 @@ EOF
     echo -e "  ${DIM}Si GitHub no es accesible, instalar con: sudo snap install rmpc${NC}"
     cmd_preview "Descarga binario desde github.com/mierak/rmpc/releases"
     if ! ask_yn "¿Instalar rmpc?"; then
-      info "Omitiendo rmpc."; return
+      info "Omitiendo rmpc."
+      return
     fi
 
     local RMPC_VERSION
-    RMPC_VERSION=$(curl -s "https://api.github.com/repos/mierak/rmpc/releases/latest" \
-      | grep -Po '"tag_name": "v\K[^"]*')
+    RMPC_VERSION=$(curl -s "https://api.github.com/repos/mierak/rmpc/releases/latest" |
+      grep -Po '"tag_name": "v\K[^"]*')
 
     if [[ -z "$RMPC_VERSION" ]]; then
       warn "No se pudo obtener versión desde GitHub. Intentando con snap..."
-      sudo snap install rmpc >> "$LOG_FILE" 2>&1 && success "rmpc instalado vía snap." || \
+      sudo snap install rmpc >>"$LOG_FILE" 2>&1 && success "rmpc instalado vía snap." ||
         warn "Instalación fallida. Manual: https://github.com/mierak/rmpc/releases"
       return
     fi
@@ -717,8 +750,8 @@ EOF
     info "Descargando rmpc v${RMPC_VERSION}..."
     curl -Lo /tmp/rmpc.tar.gz \
       "https://github.com/mierak/rmpc/releases/download/v${RMPC_VERSION}/rmpc-x86_64-unknown-linux-gnu.tar.gz" \
-      >> "$LOG_FILE" 2>&1
-    tar -xf /tmp/rmpc.tar.gz -C /tmp >> "$LOG_FILE" 2>&1
+      >>"$LOG_FILE" 2>&1
+    tar -xf /tmp/rmpc.tar.gz -C /tmp >>"$LOG_FILE" 2>&1
     sudo install /tmp/rmpc /usr/local/bin/rmpc
     rm -f /tmp/rmpc /tmp/rmpc.tar.gz
     success "rmpc v${RMPC_VERSION} instalado."
@@ -731,7 +764,7 @@ EOF
   elif command_exists rmpc; then
     if ask_yn "¿Generar config rmpc por defecto en dotfiles/rmpc/?"; then
       mkdir -p "$rmpc_repo/themes"
-      rmpc config show > "$rmpc_repo/config.ron" 2>/dev/null || true
+      rmpc config show >"$rmpc_repo/config.ron" 2>/dev/null || true
       success "Config rmpc generada en $rmpc_repo/config.ron"
     fi
   fi
@@ -761,9 +794,9 @@ EOF
     mkdir -p "$smb_mount"
     if ask_yn "¿Montar servidor SMB ahora? (//192.168.0.25/Datos_main)"; then
       sudo mount -t cifs //192.168.0.25/Datos_main "$smb_mount" \
-        -o "credentials=$smb_creds,uid=$(id -u),gid=$(id -g)" >> "$LOG_FILE" 2>&1 \
-        && success "Servidor montado en $smb_mount" \
-        || warn "Montaje fallido — verifica red o credenciales."
+        -o "credentials=$smb_creds,uid=$(id -u),gid=$(id -g)" >>"$LOG_FILE" 2>&1 &&
+        success "Servidor montado en $smb_mount" ||
+        warn "Montaje fallido — verifica red o credenciales."
     fi
 
     if ask_yn "¿Hacer el montaje permanente en /etc/fstab?"; then
@@ -771,7 +804,7 @@ EOF
       if grep -qF "192.168.0.25/Datos_main" /etc/fstab; then
         warn "Ya existe entrada en /etc/fstab — omitiendo."
       else
-        echo "$fstab_entry" | sudo tee -a /etc/fstab > /dev/null
+        echo "$fstab_entry" | sudo tee -a /etc/fstab >/dev/null
         success "Entrada agregada a /etc/fstab. Montará automáticamente al boot."
       fi
     fi
@@ -780,7 +813,7 @@ EOF
 
 # ─── Symlinks ─────────────────────────────────────────────────────────────────
 setup_symlinks() {
-  section "11/12 · Symlinks al repo dotfiles"
+  section "12/12 · Symlinks al repo dotfiles"
 
   echo -e "  Creará los siguientes enlaces simbólicos:"
   echo -e "  ${DIM}~/.zshrc              → dotfiles/.zshrc${NC}"
@@ -799,21 +832,22 @@ setup_symlinks() {
   echo ""
 
   if ! ask_yn "¿Crear symlinks?"; then
-    info "Omitiendo symlinks."; return
+    info "Omitiendo symlinks."
+    return
   fi
 
-  make_link "$DOTFILES_DIR/.zshrc"    "$HOME/.zshrc"
+  make_link "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
   make_link "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
-  make_link "$DOTFILES_DIR/.config/nvim"    "$HOME/.config/nvim"
+  make_link "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
   make_link "$DOTFILES_DIR/.config/wezterm" "$HOME/.config/wezterm"
-  make_link "$DOTFILES_DIR/git/.gitconfig"        "$HOME/.gitconfig"
+  make_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
   make_link "$DOTFILES_DIR/git/.gitignore_global" "$HOME/.config/git/.gitignore_global"
-  make_link "$DOTFILES_DIR/lazygit"    "$HOME/.config/lazygit"
+  make_link "$DOTFILES_DIR/lazygit" "$HOME/.config/lazygit"
   make_link "$DOTFILES_DIR/lazydocker" "$HOME/.config/lazydocker"
-  make_link "$DOTFILES_DIR/btop"       "$HOME/.config/btop"
-  make_link "$DOTFILES_DIR/htop"       "$HOME/.config/htop"
-  make_link "$DOTFILES_DIR/mpd"        "$HOME/.config/mpd"
-  make_link "$DOTFILES_DIR/rmpc"       "$HOME/.config/rmpc"
+  make_link "$DOTFILES_DIR/btop" "$HOME/.config/btop"
+  make_link "$DOTFILES_DIR/htop" "$HOME/.config/htop"
+  make_link "$DOTFILES_DIR/mpd" "$HOME/.config/mpd"
+  make_link "$DOTFILES_DIR/rmpc" "$HOME/.config/rmpc"
 }
 
 # ─── Resumen final ────────────────────────────────────────────────────────────

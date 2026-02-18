@@ -12,7 +12,7 @@
 .DS_Store
 
 # Archivos de log
-#*.log
+*.log
 
 # Carpetas de node_modules, cache, etc
 node_modules/
@@ -31,8 +31,8 @@ smb/.smbcredentials
 # .tokens
 
 # ─── Archivos de sistema ────────────────────────────────────────────────────────
-#logs/
-#*.log
+logs/
+*.log
 .DS_Store
 Thumbs.db
 

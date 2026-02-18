@@ -1,0 +1,8 @@
+[Unit]
+Description=Run logid on boot with delay
+
+[Timer]
+OnBootSec=10
+
+[Install]
+WantedBy=timers.target
