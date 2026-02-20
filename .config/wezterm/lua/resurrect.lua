@@ -13,10 +13,10 @@ function M.setup(config)
 	})
 
 	-- Resurrection on startup
-	wezterm.on("gui-startup", resurrect.state_manager.resurrect_on_gui_startup)
+	--wezterm.on("gui-startup", resurrect.state_manager.resurrect_on_gui_startup)
 
 	-- Actualizar plugins automáticamente
-	wezterm.plugin.update_all()
+	-- wezterm.plugin.update_all() -- actualizar manualmente con :lua wezterm.plugin.update_all()
 end
 
 function M.keys()

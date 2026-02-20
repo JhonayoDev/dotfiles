@@ -246,7 +246,7 @@ fsearch-all() {
 }
 export PATH="$HOME/.local/bin:$PATH"
 
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 export ANDROID_HOME=$HOME/android-sdk
@@ -256,3 +256,6 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 # opencode
 export PATH=/home/jhonayo/.opencode/bin:$PATH
 export PATH="$PATH:$HOME/.pub-cache/bin"
+
+# Neovim (binario oficial)
+export PATH="$PATH:/opt/nvim-linux-x86_64/bin"

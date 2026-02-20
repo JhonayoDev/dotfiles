@@ -2,15 +2,15 @@
   "name": "lib",
   "dependencies": {
     "corepack": {
-      "version": "0.34.0",
-      "overridden": false
-    },
-    "neovim": {
-      "version": "5.4.0",
+      "version": "0.34.6",
       "overridden": false
     },
     "npm": {
-      "version": "10.9.3",
+      "version": "11.8.0",
+      "overridden": false
+    },
+    "tree-sitter-cli": {
+      "version": "0.26.5",
       "overridden": false
     }
   }

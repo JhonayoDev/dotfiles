@@ -2,28 +2,28 @@ local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
 -- Importar módulos
-local constants = require("constants")
-local commands = require("commands")
-local keys = require("lua.keys")
-local workspaces = require("lua.workspaces")
-local status = require("lua.status")
-local resurrect = require("lua.resurrect")
+--local constants = require("constants")
+--local commands = require("commands")
+--local keys = require("lua.keys")
+--local workspaces = require("lua.workspaces")
+--local status = require("lua.status")
+--local resurrect = require("lua.resurrect")
 --local appearance = require("lua.appearance")
 
 -- Aplicar configuraciones de módulos
-config.keys = keys.setup()
-status.setup()
-workspaces.setup()
+--config.keys = keys.setup()
+--status.setup()
+--workspaces.setup()
 --appearance.apply_to_config(config)
 
 -- CONFIGURACIÓN DEL MULTIPLEXOR (Servidor)
-config.unix_domains = {
-	{ name = "unix" },
-}
-config.default_gui_startup_args = { "connect", "unix" }
+--config.unix_domains = {
+--	{ name = "unix" }
+--}
+--config.default_gui_startup_args = { "connect", "unix" }
 
 -- FUENTE
-config.font = wezterm.font("MesloLGS Nerd Font Mono", { weight = "Light" })
+config.font = wezterm.font("MesloLGS NF", { weight = "Regular" })
 config.font_size = 12
 
 -- FONDO
@@ -39,9 +39,9 @@ config.window_background_opacity = 0.9
 config.window_decorations = "TITLE | RESIZE"
 
 -- Paleta de comandos
-wezterm.on("augment-command-palette", function()
-	return commands
-end)
+--wezterm.on("augment-command-palette", function()
+--	return commands
+--end)
 
 -- PADDING
 config.window_padding = {
@@ -90,6 +90,6 @@ config.front_end = "WebGpu"
 config.webgpu_power_preference = "HighPerformance"
 
 -- RESURRECT_WEZTERM
-resurrect.setup(config)
+--resurrect.setup(config)
 
 return config
