@@ -1,0 +1,13 @@
+[Unit]
+Description=Volume control via MX Master 3S
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/dotfiles/scripts/volume-control.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

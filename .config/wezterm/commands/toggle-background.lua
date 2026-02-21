@@ -6,12 +6,16 @@ local command = {
 	icon = "md_circle_opacity",
 	action = wezterm.action_callback(function(window)
 		local overrides = window:get_config_overrides() or {}
-		if not overrides.window_background_image or overrides.window_background_image == "" then
+
+		if overrides.window_background_image then
+			-- Si ya hay imagen → la quitamos
+			overrides.window_background_image = nil
+		else
+			-- Si no hay imagen → la ponemos
 			overrides.window_background_image = constants.bg_image
 			overrides.window_background_opacity = 0.9
-		else
-			overrides.window_background_image = ""
 		end
+
 		window:set_config_overrides(overrides)
 	end),
 }

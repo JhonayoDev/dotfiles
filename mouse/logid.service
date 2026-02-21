@@ -1,0 +1,13 @@
+[Unit]
+Description=Logitech Configuration Daemon
+Wants=udev.service
+After=udev.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/logid
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

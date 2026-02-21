@@ -1,0 +1,16 @@
+[Unit]
+Description=Remap MX Master buttons in X11
+After=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 5
+ExecStart=/home/jhonayo/dotfiles/scripts/mouse-fix.sh
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,8 +1,9 @@
 [Unit]
 Description=Run logid on boot with delay
+After=network.target
 
 [Timer]
-OnBootSec=10
+OnBootSec=30
 
 [Install]
 WantedBy=timers.target
