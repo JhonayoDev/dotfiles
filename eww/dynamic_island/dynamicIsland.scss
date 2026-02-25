@@ -1,0 +1,119 @@
+* {
+  all: unset;
+}
+window {
+  background: transparent;
+}
+window .island {
+  background-color: #0a051e;
+  border-radius: 0 0 10px 10px;
+  border: 2px solid #00ffff;
+  padding: 0;
+}
+window .compact-title {
+  color: red;
+  font-size: 14px;
+}
+/*window .compact-row {
+  min-height: 20px;
+  padding: 4px;
+  //border: 2px solid blue;
+} */
+window .island-expanded {
+  min-height: 12px;
+  border: 2px solid red;
+}
+window .compact-logo {
+  font-size: 16px;
+  min-height: 5px;
+  //border: 2px solid cyan;
+}
+window button {
+  background: transparent;
+  border: none;
+  padding: 0px;
+  border-radius: 8px;
+  color: #ff00ff;
+  font-size: 20px;
+}
+
+window button:hover {
+  background-color: rgba(255, 0, 255, 0.1);
+}
+
+window button:active {
+  background-color: rgba(255, 0, 255, 0.2);
+}
+window .cover-art {
+  background-size: cover;
+  background-position: center;
+  min-width: 110px;
+  min-height: 110px;
+  border-radius: 8px;
+  border: 1px solid #00ffff;
+  background-color: #1a1a2e;
+}
+
+window .cover-fallback-icon {
+  color: rgba(0, 255, 255, 0.25);
+  font-size: 14px;
+}
+
+window .cover-btn {
+  border-radius: 8px;
+}
+window scale {
+  min-width: 100px;
+  min-height: 6px;
+}
+
+window scale trough {
+  background-color: #222244;
+  border-radius: 4px;
+  min-height: 6px;
+}
+
+window scale highlight {
+  background-color: #00ffff;
+  border-radius: 4px;
+}
+
+window scale slider {
+  background-color: #ff00ff;
+  border-radius: 50%;
+  min-width: 14px;
+  min-height: 14px;
+}
+
+/* =========================================
+   MPD PROGRESS WIDGET
+========================================= */
+
+window .progress-row {
+  min-width: 200px;
+}
+
+window .time-current,
+window .time-total {
+  font-size: 10px;
+  color: #ccccff;
+  min-width: 34px; /* mantiene ancho estable */
+}
+
+window .progress-bar {
+  min-width: 120px;
+}
+
+window .progress-time-row {
+  font-size: 11px;
+  color: #00ffff;
+}
+
+window .time-separator {
+  opacity: 0.6;
+}
+
+.progress-time-row {
+  font-size: 11px;
+  color: #cccccc;
+}

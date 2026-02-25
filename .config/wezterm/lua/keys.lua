@@ -19,8 +19,8 @@ function M.setup()
 		-- PANELES
 		{ key = "H", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 		{ key = "D", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-		{ key = "x", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
-		{ key = "X", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = false }) },
+		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
+		{ key = "Q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = false }) },
 
 		-- NAVEGACIÓN ENTRE PANELES
 		{ key = "LeftArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Left") },

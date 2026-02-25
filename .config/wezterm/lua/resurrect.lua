@@ -58,7 +58,7 @@ function M.keys()
 		},
 		-- Eliminar estado guardado
 		{
-			key = "Q",
+			key = "K",
 			mods = "CTRL|SHIFT",
 			action = wezterm.action_callback(function(win, pane)
 				resurrect.fuzzy_loader.fuzzy_load(win, pane, function(id)

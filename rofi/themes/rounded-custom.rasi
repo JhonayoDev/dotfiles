@@ -1,0 +1,150 @@
+/* =========================================================
+   ROUNDED CUSTOM THEME - Personal mod by Juan
+   Base: Newman Sanchez rounded template
+   ========================================================= */
+
+/* =========================
+   🎨 COLORES PRINCIPALES
+   ========================= */
+* {
+    /* Fondo principal (ANTES era muy transparente F2 ≈ 95%)
+     * Ahora más sólido para que destaque sobre ventanas */
+     /* Fondo ventana principal */
+    bg0:    #011423;
+
+    /* Fondo barra de búsqueda */
+    bg1:    #2a2a2a;
+
+    /* Fondo mensajes */
+    bg2:    #333333;
+
+    /* Color de selección (azul principal) */
+    bg3:    #1a73e8;
+
+    /* Texto principal */
+    fg0:    #eeeeee;
+
+    /* Texto secundario */
+    fg1:    #ffffff;
+
+    /* Prompt (texto tenue) */
+    fg2:    #737272;
+
+    /* Placeholder */
+    fg3:    #777777;
+
+    /* 🔠 Fuente más grande */
+    font: "JetBrains Mono Nerd Font 15";
+
+    background-color: transparent;
+    text-color: @fg0;
+
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+
+    margin: 0;
+    padding: 0;
+    spacing: 0;
+}
+
+/* =========================
+   🪟 VENTANA PRINCIPAL
+   ========================= */
+window {
+    location:       center;
+    width:          950px;
+    border-radius:  20px;
+
+    background-color: @bg0;
+
+    /* Sombra simulada */
+    border: 2px;
+    border-color: #000000;
+}
+
+/* =========================
+   📦 CONTENEDOR GENERAL
+   ========================= */
+mainbox {
+    padding: 20px;
+}
+
+/* =========================
+   🔎 BARRA DE BÚSQUEDA
+   ========================= */
+inputbar {
+    background-color: @bg1;
+
+    border: 2px;
+    border-radius: 14px;
+    border-color: @bg3;
+
+    padding: 10px 18px;
+    spacing: 10px;
+
+    children: [ prompt, entry ];
+}
+
+/* Texto "Run", "Search", etc */
+prompt {
+    text-color: @fg2;
+}
+
+/* Campo donde escribes */
+entry {
+    placeholder: "Search applications...";
+    placeholder-color: @fg3;
+}
+
+/* =========================
+   📜 LISTA DE RESULTADOS
+   ========================= */
+listview {
+    background-color: transparent;
+
+    margin: 18px 0 0;
+/*    lines: 10;
+    columns: 1;
+*/
+    fixed-height: false;
+}
+
+/* Cada elemento de la lista */
+element {
+    padding: 12px 18px;
+    spacing: 12px;
+    border-radius: 14px;
+}
+
+/* Elemento seleccionado */
+element selected {
+    background-color: @bg3;
+    text-color: @fg1;
+}
+
+/* Iconos */
+element-icon {
+    size: 2em;
+    vertical-align: 0.5;
+}
+
+/* Texto del elemento */
+element-text {
+    text-color: inherit;
+}
+
+/* =========================
+   💬 MENSAJES INFERIORES
+   ========================= */
+message {
+    margin: 15px 0 0;
+    border-radius: 14px;
+    border: 2px;
+    border-color: @bg2;
+    background-color: @bg2;
+}
+
+textbox {
+    padding: 10px 20px;
+}
+

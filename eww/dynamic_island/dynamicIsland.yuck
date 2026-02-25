@@ -1,0 +1,379 @@
+;; ============================================================
+;; ARCHIVO: eww.yuck — Dynamic Island fusionado
+;; 
+;; ESTRUCTURA GENERAL:
+;;   1. Datos (deflisten + defpoll) → variables reactivas
+;;   2. Widgets helper               → componentes reutilizables
+;;   3. island-compact               → el pill siempre visible
+;;   4. island-expanded              → el panel completo (hover)
+;;   5. dynamic-island               → wrapper con eventbox
+;;   6. defwindow                    → la ventana GTK real
+;;
+;; DEPENDENCIAS NECESARIAS:
+;;   mpc        → cliente de MPD (ya tienes)
+;;   pamixer    → control de volumen (ya tienes vía volumecontroller.sh)
+;;   ffmpeg     → extracción de cover art (ya tienes vía get-cover.sh)
+;;   cava       → visualizador de audio (OPCIONAL, instalar con: sudo apt install cava)
+;;
+;; SCRIPTS REQUERIDOS en ~/.config/eww/scripts/:
+;;   get-cover.sh        → extrae cover art del archivo de audio
+;;   volumecontroller.sh → sube/baja/mutea volumen con pamixer
+;;   cava.sh             → genera visualizador ASCII (solo si tienes cava)
+;;   island-hover.sh     → debounce para el hover del island
+;; ============================================================
+
+;; ============================================================
+;; SECCIÓN 1: DATOS REACTIVOS (deflisten)
+;; ------------------------------------------------------------
+;; deflisten: lanza un proceso persistente y escucha su stdout.
+;; Cada línea nueva que imprime el proceso → actualiza la variable.
+;; mpc idleloop player: se bloquea y emite una línea cada vez que
+;; el estado del player cambia (cambio de canción, play, pause...).
+;; El & al final del comando lanza el idleloop en background y
+;; ejecuta el segundo comando inmediatamente para el valor inicial.
+;; ============================================================
+
+;; Título de la canción actual
+  (deflisten song_title :initial "No Music Playing"
+    "bash -c 'mpc -f \"%title%\" current || echo \"No Music Playing\"; mpc idleloop player | while read; do mpc -f \"%title%\" current || echo \"No Music Playing\"; done'")
+
+;; Artista de la canción actual
+  (deflisten song_artist :initial "Unknown Artist"
+    "bash -c 'mpc -f \"%artist%\" current || echo \"Unknown Artist\"; mpc idleloop player | while read; do mpc -f \"%artist%\" current || echo \"Unknown Artist\"; done'")
+
+;; Estado: "playing", "paused" o "stopped"
+;;  (deflisten player_state :initial "stopped"
+;;  "bash -c 'mpc status | grep -o \"\\[playing\\]\\|\\[paused\\]\" | tr -d \"[]\" || echo stopped; mpc idleloop player | while read; do mpc status | grep -o \"\\[playing\\]\\|\\[paused\\]\" | tr -d \"[]\" || echo stopped; done'")
+(deflisten player_state :initial "stopped"
+  "bash -c '
+    get_state() {
+      state=$(mpc status | awk \"NR==2 {print \\$1}\")
+      case \"$state\" in
+        \"[playing]\") echo playing ;;
+        \"[paused]\")  echo paused ;;
+        *) echo stopped ;;
+      esac
+    }
+
+    get_state
+    mpc idleloop player | while read; do
+      get_state
+    done
+  '")
+;; Ruta al cover art — se actualiza cuando cambia la canción
+  (deflisten cover_art :initial "/tmp/mpd-cover-fallback.png"
+    "bash -c 'bash ~/.config/eww/scripts/get-cover.sh; mpc idleloop player | while read; do bash ~/.config/eww/scripts/get-cover.sh; done'")
+
+;; Visualizador cava — emite continuamente barras ASCII
+;; TODO: revisar si quedo operativo y aplicar
+;; (deflisten cava :initial ""
+;;   "bash ~/.config/eww/scripts/cava.sh")
+
+;; Variable vacía mientras cava no está disponible
+;; Reemplazar con el deflisten de arriba cuando instales cava
+(defvar cava "")
+
+
+;; ============================================================
+;; SECCIÓN 2: DATOS POLLED (defpoll)
+;; ------------------------------------------------------------
+;; defpoll: ejecuta un comando cada N segundos.
+;; Usar para datos que cambian continuamente (tiempo, volumen).
+;; Intervalo más largo = menos CPU. 1s para tiempo, 2s para volumen.
+;; ============================================================
+
+
+(defpoll formatted_position
+  :interval "1s"
+  "mpc status | grep -oE '[0-9]+:[0-9]+/[0-9]+:[0-9]+' | cut -d'/' -f1")
+
+(defpoll song_length_fmt
+  :interval "5s"
+  "mpc status | grep -oE '[0-9]+:[0-9]+/[0-9]+:[0-9]+' | cut -d'/' -f2")
+
+;; Volumen actual 0-100
+(defpoll mpd_volume :interval "2s"
+  "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh get 2>/dev/null || echo 0")
+
+;; Estado mute: "true" o "false"
+(defpoll mpd_muted :interval "2s"
+  "test $(mpc volume | grep -o '[0-9]\\+') -eq 0 && echo true || echo false")
+
+
+;; Variable de estado para expandir/contraer el island
+
+(defvar island_expanded false)
+
+
+;; ============================================================
+;; SECCIÓN 3: WIDGETS HELPER
+;; ============================================================
+
+;; PROGRESS TIME
+
+(defwidget mpd_progress_widget []
+  (box
+    :class "progress-time-row"
+    :orientation "h"
+    :halign "center"
+    :spacing 4
+
+    (label :text {
+      player_state == "stopped"
+        ? "--:--"
+        : formatted_position
+    })
+
+    (label :text "/")
+
+    (label :text {
+      player_state == "stopped"
+        ? "--:--"
+        : song_length_fmt
+    })
+  ))
+
+
+
+;; MPD VOLUME WIDGET
+
+
+(defwidget mpd_volume_widget []
+  (box
+    :class "mpd-volume-container"
+    :orientation "v"
+    :spacing 10
+
+    ;; ICON
+    (button
+      :class "mpd-volume-icon"
+      :onclick "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh mute"
+      (label
+        :text {
+          (mpd_volume == "" ? 0 : mpd_volume) <= 0
+            ? "󰝟"
+            : (mpd_volume == "" ? 0 : mpd_volume) <= 30
+              ? "󰕿"
+              : (mpd_volume == "" ? 0 : mpd_volume) <= 70
+                ? "󰖀"
+                : "󰕾"
+        })
+      )
+
+    ;; SLIDER
+    (scale
+      :class "mpd-volume-slider"
+      ;; intentto de cambio de orientation
+      :orientation "h"
+      :min 0
+      :max 101
+      :value mpd_volume
+      :onchange "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh set {}")
+
+    ;; PERCENT TEXT (opcional)
+    (label
+      :class "mpd-volume-text"
+      :text "${mpd_volume}%")
+  ))
+
+;; ============================================================
+;; SECCIÓN 4: ESTADO COMPACTO — el pill siempre visible
+;; ------------------------------------------------------------
+;; Layout horizontal: [dot] [título] [play/pause] 
+;; ============================================================
+
+(defwidget island-compact []
+  (box
+    :class "compact-row"
+    :orientation "h"
+    ;;TEST espacio
+    ;;:spacing 10
+    :halign "start"
+    :valign "center"
+
+    ;; ───────── MODO NORMAL (visible cuando NO está expandido) ─────────
+    (box
+      :visible {!island_expanded}
+      :orientation "h"
+      ;; TEST
+      ;;:spacing 10
+
+      (box :class {player_state == "playing"
+                   ? "status-dot playing"
+                   : "status-dot paused"})
+
+      (label
+        :class "compact-title"
+        :text {
+          player_state == "stopped"
+            ? "♫"
+            : song_title
+          }
+        :limit-width 22)
+
+      (button
+        :class "compact-play-btn"
+        :onclick "mpc toggle"
+        (label :text {player_state == "playing" ? "⏸" : ""}))
+
+    )
+
+  ))
+
+
+;; ============================================================
+;; SECCIÓN 5: ESTADO EXPANDIDO — el panel completo
+;; ------------------------------------------------------------
+;; Layout: dos columnas
+;;   Izquierda: cover art (cuadrado)
+;;   Derecha:   título, artista, posición, barra seek,
+;;              cava visualizer, controles
+;; Más a la derecha: barra de volumen vertical
+;; ============================================================
+
+(defwidget island-expanded []
+  (box
+    :class "expanded-content"
+    :orientation "h"
+    :space-evenly false     ;; false = cada hijo toma el espacio que necesita
+    :spacing 12
+
+    ;; ── COVER ART ──────────────────────────────────────────
+    ;; background-image con url() funciona en GTK CSS
+    ;; El style inline se aplica dinámicamente según si hay cover real
+    ;; Para quitar el cover: borra este bloque (button ... hasta su cierre)
+    (button
+      :class "cover-btn"
+      ;; TODO: Revisar funcionamiento ajustar para que abra wezterm con rmpc al presionar la caratula
+      :onclick "wezterm start -- rmpc &"
+      (box
+        :class "cover-art"
+        :style {cover_art != "/tmp/mpd-cover-fallback.png"
+                ? "background-image: url('${cover_art}');"
+                : "background-color: #1a1a2e;"}
+        ;; Ícono ♫ solo cuando no hay cover real
+        (label
+          :class "cover-fallback-icon"
+          :text {cover_art == "/tmp/mpd-cover-fallback.png" ? "♫" : ""})))
+
+    ;; ── INFO + CONTROLES ───────────────────────────────────
+    (box
+      :class "music-info"
+      :orientation "v"
+      :space-evenly false
+      :spacing 6
+
+      ;; Título de la canción
+      (label
+        :class "song-title"
+        :text {
+          player_state == "stopped"
+            ? "No Music Playing"
+            : song_title
+          }
+        :limit-width 25)
+
+      ;; Artista
+      (label
+        :class "artist"
+        :text {
+          player_state == "stopped"
+            ? ""
+            : song_artist
+          }
+        :limit-width 25)
+
+      ;; Controles prev / play-pause / next
+      ;; Para cambiar los íconos: busca "Nerd Font cheat sheet" en el navegador
+      (box :class "controls" :orientation "h" :spacing 4
+        (button :class "ctrl-btn-exp" :onclick "mpc prev >/dev/null 2>&1 &"
+          (label :text "⏮"))
+
+        (button :class "ctrl-btn-exp play-exp" :onclick "mpc toggle >/dev/null 2>&1 &"
+          (label :text {player_state == "playing" ? "⏸" : "▶"}))
+
+        (button :class "ctrl-btn-exp stop-exp" :onclick "mpc stop >/dev/null 2>&1 &"
+          (label :text "⏹"))
+
+        (button :class "ctrl-btn-exp" :onclick "mpc next >/dev/null 2>&1 &"
+          (label :text "⏭"))
+        )
+
+        (mpd_progress_widget)
+
+      ;; Visualizador CAVA
+      ;; DESACTIVADO: cava es una variable vacía mientras no esté instalado
+      ;; Cuando instales cava y actives el deflisten, esto mostrará las barras
+      ;; Para quitar por completo: borra este bloque label
+      ;;(label
+      ;;  :class "cava-visualizer"
+      ;;  :text {cava == "" ? "  ▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂" : cava})
+    )
+
+    ;; ── BARRA DE VOLUMEN VERTICAL ──────────────────────────
+    ;; Definido en seccion 3.
+    (mpd_volume_widget)
+  ))
+
+
+;; ============================================================
+;; SECCIÓN 6: WIDGET PRINCIPAL — envuelve todo
+;; ============================================================
+
+(defwidget dynamic-island []
+  (eventbox
+    :onhover     "bash ~/.config/eww/scripts/island-hover.sh enter &"
+    :onhoverlost "bash ~/.config/eww/scripts/island-hover.sh leave &"
+
+    (box
+      :class {island_expanded
+              ? "island island-expanded"
+              : "island island-compact"}
+      :orientation "v"
+      :halign "center"
+      :valign "start"
+
+      ;; Compacto
+      (box
+        :visible {!island_expanded}
+        (island-compact))
+
+      ;; Expandido
+      (revealer
+        :transition "slidedown"
+        :duration "200ms"
+        :reveal island_expanded
+        :visible island_expanded
+        (island-expanded))
+    )
+  ))
+
+;; ============================================================
+;; SECCIÓN 7: VENTANA GTK
+;; ------------------------------------------------------------
+;; :monitor 0       → pantalla principal (0-indexed)
+;; :x "0" con anchor "top center" → centrado horizontal real
+;; Sin :height      → la ventana crece/encoge con el contenido
+;; :stacking "overlay" → encima de todas las ventanas
+;; :wm-ignore true  → el WM no lo toca (sin decoraciones, sin taskbar)
+;; :windowtype "dock" → hint EWMH para que el WM lo trate como panel
+;; :reserve         → registra strut EWMH en el borde superior
+;;
+;; PARA DWM: si la ventana aparece en el tiling, añade en config.h:
+;;   { "eww-dynamic-island", NULL, NULL, 0, 1, 0, -1 },
+;;   en el array rules[] con isfloating=1
+;;
+;; PARA XFCE: si hay problemas, prueba :wm-ignore false
+;; ============================================================
+
+(defwindow dynamic-island
+  :monitor 0
+  :geometry (geometry
+              :x "0"
+              :y "1px"
+              :width "340px"
+              :anchor "top center")
+  :stacking "overlay"
+  :wm-ignore true
+  :focusable false
+  (dynamic-island))

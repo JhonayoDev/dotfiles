@@ -22,7 +22,7 @@ function M.setup()
 		-- Workspace para proyectos
 		mux.spawn_window({
 			workspace = "Programing",
-			cwd = os.getenv("HOME") .. "/Development/projects",
+			cwd = os.getenv("HOME") .. "/dev",
 		})
 
 		-- Workspace para dotfiles
