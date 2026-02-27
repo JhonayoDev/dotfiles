@@ -27,7 +27,7 @@ element-text {
 }
 '
 
-options="Audio\0icon\x1faudio-volume-high\nBluetooth\0icon\x1fbluetooth\nVolume\0icon\x1faudio-volume-medium\nPower\0icon\x1fsystem-shutdown"
+options="Bluetooth\0icon\x1fbluetooth\nVolume\0icon\x1faudio-volume-medium\nAudio\0icon\x1faudio-volume-high\nPower\0icon\x1fsystem-shutdown"
 
 chosen=$(echo -e "$options" | rofi \
   -dmenu \
@@ -37,8 +37,8 @@ chosen=$(echo -e "$options" | rofi \
   -theme-str "$layout")
 
 case "$chosen" in
-Audio) echo "Audio próximamente" ;;
 Bluetooth) ~/.config/rofi/scripts/system/bluetooth.sh ;;
-Volume) echo "Volume próximamente" ;;
-Power) systemctl poweroff ;;
+Audio) ~/.config/rofi/scripts/system/audio-output.sh ;;
+Volume) ~/.config/rofi/scripts/system/volume.sh ;;
+Power) ~/.config/rofi/scripts/powermenu.sh ;;
 esac
