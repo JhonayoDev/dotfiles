@@ -2,7 +2,8 @@
   all: unset;
 }
 window {
-  background: transparent;
+  background-color: rgba(20, 20, 25, 0.6);
+  border-radius: 0 0 12px 12px;
 }
 window .island {
   background-color: #0a051e;
@@ -47,8 +48,8 @@ window button:active {
 window .cover-art {
   background-size: cover;
   background-position: center;
-  min-width: 110px;
-  min-height: 110px;
+  min-width: 80px;
+  min-height: 80px;
   border-radius: 8px;
   border: 1px solid #00ffff;
   background-color: #1a1a2e;
@@ -116,4 +117,20 @@ window .time-separator {
 .progress-time-row {
   font-size: 11px;
   color: #cccccc;
+}
+
+window .cover-art-container {
+  padding: 8px;
+  margin: 8px;
+  border: 1px solid red;
+}
+
+window .mpd-volume-slider {
+  padding: 10px;
+}
+
+.cava-visualizer {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.7);
 }

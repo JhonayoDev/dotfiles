@@ -65,13 +65,8 @@
     "bash -c 'bash ~/.config/eww/scripts/get-cover.sh; mpc idleloop player | while read; do bash ~/.config/eww/scripts/get-cover.sh; done'")
 
 ;; Visualizador cava — emite continuamente barras ASCII
-;; TODO: revisar si quedo operativo y aplicar
-;; (deflisten cava :initial ""
-;;   "bash ~/.config/eww/scripts/cava.sh")
-
-;; Variable vacía mientras cava no está disponible
-;; Reemplazar con el deflisten de arriba cuando instales cava
-(defvar cava "")
+ (deflisten cava :initial ""
+   "bash ~/dotfiles/eww/dynamic_island/scripts/cava.sh")
 
 
 ;; ============================================================
@@ -109,29 +104,6 @@
 ;; SECCIÓN 3: WIDGETS HELPER
 ;; ============================================================
 
-;; PROGRESS TIME
-
-(defwidget mpd_progress_widget []
-  (box
-    :class "progress-time-row"
-    :orientation "h"
-    :halign "center"
-    :spacing 4
-
-    (label :text {
-      player_state == "stopped"
-        ? "--:--"
-        : formatted_position
-    })
-
-    (label :text "/")
-
-    (label :text {
-      player_state == "stopped"
-        ? "--:--"
-        : song_length_fmt
-    })
-  ))
 
 
 
@@ -142,106 +114,56 @@
   (box
     :class "mpd-volume-container"
     :orientation "v"
-    :spacing 10
+    :space-evenly true
+    :spacing 12
 
-    ;; ICON
-    (button
-      :class "mpd-volume-icon"
-      :onclick "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh mute"
+
+    (box
+      :class "control-volume-btn"
+      :orientation "h"
+      :spacing 12
+      ;; ICON
+      (button
+        :class "mpd-volume-icon"
+        :onclick "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh mute"
+        (label
+          :text {
+            (mpd_volume == "" ? 0 : mpd_volume) <= 0
+              ? "󰝟"
+              : (mpd_volume == "" ? 0 : mpd_volume) <= 30
+                ? "󰕿"
+                : (mpd_volume == "" ? 0 : mpd_volume) <= 70
+                  ? "󰖀"
+                  : "󰕾"
+          })
+        )
+    
+      ;; PERCENT TEXT (opcional)
       (label
-        :text {
-          (mpd_volume == "" ? 0 : mpd_volume) <= 0
-            ? "󰝟"
-            : (mpd_volume == "" ? 0 : mpd_volume) <= 30
-              ? "󰕿"
-              : (mpd_volume == "" ? 0 : mpd_volume) <= 70
-                ? "󰖀"
-                : "󰕾"
-        })
-      )
-
+        :class "mpd-volume-text"
+        :text "${mpd_volume}%")
+    )
     ;; SLIDER
     (scale
       :class "mpd-volume-slider"
-      ;; intentto de cambio de orientation
       :orientation "h"
       :min 0
       :max 101
       :value mpd_volume
       :onchange "bash ~/dotfiles/eww/dynamic_island/scripts/volumecontroller.sh set {}")
 
-    ;; PERCENT TEXT (opcional)
-    (label
-      :class "mpd-volume-text"
-      :text "${mpd_volume}%")
-  ))
+  )
+)
 
-;; ============================================================
-;; SECCIÓN 4: ESTADO COMPACTO — el pill siempre visible
-;; ------------------------------------------------------------
-;; Layout horizontal: [dot] [título] [play/pause] 
-;; ============================================================
+;; COVER ART WIDGET
 
-(defwidget island-compact []
+(defwidget cover_art_widget []
   (box
-    :class "compact-row"
+    :class "cover-art-container"
     :orientation "h"
-    ;;TEST espacio
-    ;;:spacing 10
-    :halign "start"
-    :valign "center"
-
-    ;; ───────── MODO NORMAL (visible cuando NO está expandido) ─────────
-    (box
-      :visible {!island_expanded}
-      :orientation "h"
-      ;; TEST
-      ;;:spacing 10
-
-      (box :class {player_state == "playing"
-                   ? "status-dot playing"
-                   : "status-dot paused"})
-
-      (label
-        :class "compact-title"
-        :text {
-          player_state == "stopped"
-            ? "♫"
-            : song_title
-          }
-        :limit-width 22)
-
-      (button
-        :class "compact-play-btn"
-        :onclick "mpc toggle"
-        (label :text {player_state == "playing" ? "⏸" : ""}))
-
-    )
-
-  ))
-
-
-;; ============================================================
-;; SECCIÓN 5: ESTADO EXPANDIDO — el panel completo
-;; ------------------------------------------------------------
-;; Layout: dos columnas
-;;   Izquierda: cover art (cuadrado)
-;;   Derecha:   título, artista, posición, barra seek,
-;;              cava visualizer, controles
-;; Más a la derecha: barra de volumen vertical
-;; ============================================================
-
-(defwidget island-expanded []
-  (box
-    :class "expanded-content"
-    :orientation "h"
-    :space-evenly false     ;; false = cada hijo toma el espacio que necesita
-    :spacing 12
-
+    :space-evenly false
+    :spacing 12  
     ;; ── COVER ART ──────────────────────────────────────────
-    ;; background-image con url() funciona en GTK CSS
-    ;; El style inline se aplica dinámicamente según si hay cover real
-    ;; Para quitar el cover: borra este bloque (button ... hasta su cierre)
     (button
       :class "cover-btn"
       ;; TODO: Revisar funcionamiento ajustar para que abra wezterm con rmpc al presionar la caratula
@@ -255,8 +177,11 @@
         (label
           :class "cover-fallback-icon"
           :text {cover_art == "/tmp/mpd-cover-fallback.png" ? "♫" : ""})))
+    )
 
-    ;; ── INFO + CONTROLES ───────────────────────────────────
+)
+
+(defwidget music_info_widget []
     (box
       :class "music-info"
       :orientation "v"
@@ -282,9 +207,14 @@
             : song_artist
           }
         :limit-width 25)
+      )
+)
 
-      ;; Controles prev / play-pause / next
-      ;; Para cambiar los íconos: busca "Nerd Font cheat sheet" en el navegador
+(defwidget music_controler_widget []
+      (box
+        :class "music-controler"
+        :orientation "h"
+        :spacing 20
       (box :class "controls" :orientation "h" :spacing 4
         (button :class "ctrl-btn-exp" :onclick "mpc prev >/dev/null 2>&1 &"
           (label :text "⏮"))
@@ -298,21 +228,123 @@
         (button :class "ctrl-btn-exp" :onclick "mpc next >/dev/null 2>&1 &"
           (label :text "⏭"))
         )
+      )
+)
 
-        (mpd_progress_widget)
+(defwidget mpd_progress_widget []
+  (box
+    :class "progress-time-row"
+    :orientation "h"
+    :halign "center"
+    :spacing 4
 
-      ;; Visualizador CAVA
-      ;; DESACTIVADO: cava es una variable vacía mientras no esté instalado
-      ;; Cuando instales cava y actives el deflisten, esto mostrará las barras
-      ;; Para quitar por completo: borra este bloque label
+    (label :text {
+      player_state == "stopped"
+        ? "--:--"
+        : formatted_position
+    })
+
+    (label :text "/")
+
+    (label :text {
+      player_state == "stopped"
+        ? "--:--"
+        : song_length_fmt
+    })
+  ))
+
+;; ============================================================
+;; SECCIÓN 4: ESTADO COMPACTO — el pill siempre visible
+;; ------------------------------------------------------------
+(defwidget island-compact []
+  (box
+    :class "compact-row"
+    :orientation "h"
+    :halign "center"
+    :valign "fill"
+    :hexpand "false"
+    :width 320
+
+    (box
+      :spacing 8
+      :orientation "h" 
+      :space-evenly "false" 
+      :vexpand "false" 
+      :hexpand "false"
+
+      (label
+        :class "compact-title"
+        :text {
+          player_state == "stopped"
+            ? "♫"
+            : song_title
+          }
+        :limit-width 22)
+
       ;;(label
       ;;  :class "cava-visualizer"
-      ;;  :text {cava == "" ? "  ▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂" : cava})
+      ;;  :text 
+      ;;  {cava == "" ? " " : cava})
+
+      (label 
+        :class "cava-visualizer"
+        :text 
+        {player_state == "playing" ? cava : ""}
+        )
+
+      ;;(button
+      ;;  :class "compact-play-btn"
+      ;;  :onclick "mpc toggle"
+      ;;  (label :text {player_state == "playing" ? "⏸" : ""}))
+    )
+  )
+)
+
+
+;; ============================================================
+;; SECCIÓN 5: ESTADO EXPANDIDO — el panel completo
+;; ============================================================
+
+(defwidget island-expanded []
+  (box
+    :class "expanded-content"
+    :orientation "h"
+    :space-evenly false     ;; false = cada hijo toma el espacio que necesita
+    :spacing 12
+
+    (cover_art_widget)
+
+    ;; ── INFO + CONTROLES ───────────────────────────────────
+    (box
+      :class "music-info"
+      :orientation "v"
+      :space-evenly true
+      :spacing 6
+      
+      
+      (music_info_widget)
+      
+      (box 
+        :class "control-music"
+        :orientation "h"
+        :space-evenly true
+        :spacing 12
+
+        (box 
+          :class "control-music-btn"
+          :orientation "v"
+          :space-evenly false
+          :spacing 12
+            
+            (music_controler_widget)
+            (mpd_progress_widget)
+        )
+          (mpd_volume_widget)
+
+      )
+
     )
 
-    ;; ── BARRA DE VOLUMEN VERTICAL ──────────────────────────
-    ;; Definido en seccion 3.
-    (mpd_volume_widget)
   ))
 
 
@@ -321,52 +353,40 @@
 ;; ============================================================
 
 (defwidget dynamic-island []
-  (eventbox
-    :onhover     "bash ~/.config/eww/scripts/island-hover.sh enter &"
-    :onhoverlost "bash ~/.config/eww/scripts/island-hover.sh leave &"
+  (box
+    :class {island_expanded
+            ? "island island-expanded"
+            : "island island-compact"}
+    :orientation "v"
+    :halign "center"
+    :valign "start"
+    :vexpand false
+    :hexpand false
 
-    (box
-      :class {island_expanded
-              ? "island island-expanded"
-              : "island island-compact"}
-      :orientation "v"
-      :halign "center"
-      :valign "start"
+    (eventbox
+      :visible {!island_expanded}
+      :onhover "eww update island_expanded=true"
+      (island-compact))
 
-      ;; Compacto
-      (box
-        :visible {!island_expanded}
-        (island-compact))
-
-      ;; Expandido
+    (eventbox
+      :visible island_expanded
+      :onhoverlost "eww update island_expanded=false"
       (revealer
         :transition "slidedown"
         :duration "200ms"
         :reveal island_expanded
-        :visible island_expanded
-        (island-expanded))
-    )
+        (island-expanded)))
   ))
 
 ;; ============================================================
 ;; SECCIÓN 7: VENTANA GTK
 ;; ------------------------------------------------------------
-;; :monitor 0       → pantalla principal (0-indexed)
-;; :x "0" con anchor "top center" → centrado horizontal real
-;; Sin :height      → la ventana crece/encoge con el contenido
-;; :stacking "overlay" → encima de todas las ventanas
-;; :wm-ignore true  → el WM no lo toca (sin decoraciones, sin taskbar)
-;; :windowtype "dock" → hint EWMH para que el WM lo trate como panel
-;; :reserve         → registra strut EWMH en el borde superior
-;;
 ;; PARA DWM: si la ventana aparece en el tiling, añade en config.h:
 ;;   { "eww-dynamic-island", NULL, NULL, 0, 1, 0, -1 },
 ;;   en el array rules[] con isfloating=1
-;;
-;; PARA XFCE: si hay problemas, prueba :wm-ignore false
 ;; ============================================================
 
-(defwindow dynamic-island
+(defwindow dynamic-island-compact
   :monitor 0
   :geometry (geometry
               :x "0"
@@ -376,4 +396,20 @@
   :stacking "overlay"
   :wm-ignore true
   :focusable false
-  (dynamic-island))
+  (eventbox
+    :onhover "eww close dynamic-island-compact; eww open dynamic-island-expanded"
+    (island-compact)))
+
+(defwindow dynamic-island-expanded
+  :monitor 0
+  :geometry (geometry
+              :x "0"
+              :y "1px"
+              :width "340px"
+              :anchor "top center")
+  :stacking "overlay"
+  :wm-ignore true
+  :focusable false
+  (eventbox
+    :onhoverlost "eww close dynamic-island-expanded; eww open dynamic-island-compact"
+    (island-expanded)))
