@@ -26,7 +26,7 @@
 ;; SECCIÓN 1: DATOS REACTIVOS (deflisten)
 ;; ------------------------------------------------------------
 ;; deflisten: lanza un proceso persistente y escucha su stdout.
-;; Cada línea nueva que imprime el proceso → actualiza la variable.
+  ;; Cada línea nueva que imprime el proceso → actualiza la variable.
 ;; mpc idleloop player: se bloquea y emite una línea cada vez que
 ;; el estado del player cambia (cambio de canción, play, pause...).
 ;; El & al final del comando lanza el idleloop en background y
@@ -161,24 +161,29 @@
   (box
     :class "cover-art-container"
     :orientation "h"
-    :space-evenly false
-    :spacing 12  
-    ;; ── COVER ART ──────────────────────────────────────────
+    :halign "start"
+    :valign "start"
+
     (button
       :class "cover-btn"
-      ;; TODO: Revisar funcionamiento ajustar para que abra wezterm con rmpc al presionar la caratula
       :onclick "wezterm start -- rmpc &"
+      :hexpand false
+      :vexpand false
+
       (box
         :class "cover-art"
-        :style {cover_art != "/tmp/mpd-cover-fallback.png"
-                ? "background-image: url('${cover_art}');"
-                : "background-color: #1a1a2e;"}
-        ;; Ícono ♫ solo cuando no hay cover real
-        (label
-          :class "cover-fallback-icon"
-          :text {cover_art == "/tmp/mpd-cover-fallback.png" ? "♫" : ""})))
+        :hexpand false
+        :vexpand false
+        :width 90
+        :height 90
+        :style {
+          cover_art != "/tmp/mpd-cover-fallback.png"
+          ? "background-image: url('${cover_art}'); background-size: cover; background-position: center;"
+          : "background-image: url('/home/jhonayo/dotfiles/eww/dynamic_island/assets/apple-music-64.png'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #1a1a2e;"
+        }
+      )
     )
-
+  )
 )
 
 (defwidget music_info_widget []
@@ -186,6 +191,9 @@
       :class "music-info"
       :orientation "v"
       :space-evenly false
+      :hexpand false
+      :vexpand false
+      :height 45
       :spacing 6
 
       ;; Título de la canción
@@ -260,42 +268,34 @@
   (box
     :class "compact-row"
     :orientation "h"
-    :halign "center"
-    :valign "fill"
+    :halign "fill"
+    :valign "end"
     :hexpand "false"
-    :width 320
+    ;;:width 320
 
     (box
       :spacing 8
       :orientation "h" 
-      :space-evenly "false" 
+      :space-evenly true 
       :vexpand "false" 
       :hexpand "false"
 
       (label
-        :class "compact-title"
+        :class "compact-title" 
         :text {
           player_state == "stopped"
             ? "♫"
             : song_title
           }
-        :limit-width 22)
-
-      ;;(label
-      ;;  :class "cava-visualizer"
-      ;;  :text 
-      ;;  {cava == "" ? " " : cava})
+        :limit-width 10
+        )
 
       (label 
         :class "cava-visualizer"
         :text 
+        ;;:limit-width 30
         {player_state == "playing" ? cava : ""}
         )
-
-      ;;(button
-      ;;  :class "compact-play-btn"
-      ;;  :onclick "mpc toggle"
-      ;;  (label :text {player_state == "playing" ? "⏸" : ""}))
     )
   )
 )
@@ -309,7 +309,7 @@
   (box
     :class "expanded-content"
     :orientation "h"
-    :space-evenly false     ;; false = cada hijo toma el espacio que necesita
+    :space-evenly false    ;; false = cada hijo toma el espacio que necesita
     :spacing 12
 
     (cover_art_widget)
@@ -319,6 +319,7 @@
       :class "music-info"
       :orientation "v"
       :space-evenly true
+      :hexpand true
       :spacing 6
       
       
@@ -391,7 +392,7 @@
   :geometry (geometry
               :x "0"
               :y "1px"
-              :width "340px"
+              :width "300px"
               :anchor "top center")
   :stacking "overlay"
   :wm-ignore true
@@ -405,7 +406,7 @@
   :geometry (geometry
               :x "0"
               :y "1px"
-              :width "340px"
+              :width "360px"
               :anchor "top center")
   :stacking "overlay"
   :wm-ignore true

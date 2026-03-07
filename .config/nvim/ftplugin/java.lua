@@ -71,6 +71,10 @@ local config = {
         updateBuildConfiguration = "interactive",
         runtimes = {
           {
+            name = "JavaSE-1.8",
+            path = home .. "/.sdkman/candidates/java/8.0.482-tem",
+          },
+          {
             name = "JavaSE-17",
             path = home .. "/.sdkman/candidates/java/17.0.16-tem",
           },
@@ -164,6 +168,10 @@ local config = {
         require("dapui").close()
       end, vim.tbl_extend("force", opts, { desc = "Terminate Run Console" }))
     end
+
+    vim.keymap.set("n", "<leader>cU", function()
+      require("jdtls").set_runtime()
+    end, vim.tbl_extend("force", opts, { desc = "Set Java Runtime" }))
 
     -- ============================================================
     -- DAP: Testing
