@@ -26,9 +26,9 @@ config.default_gui_startup_args = { "connect", "unix" }
 --config.font = wezterm.font("MesloLGS NF", { weight = "Regular" })
 --config.font_size = 12
 config.font = wezterm.font_with_fallback({
-	{ family = "MesloLGS NF", weight = "Regular" },
+	"JetBrainsMono Nerd Font Mono",
+	"Symbols Nerd Font Mono",
 })
-
 config.font_size = 12.0 -- ajusta si cambió visualmente
 -- FONDO
 -- config.window_background_image = constants.bg_image
