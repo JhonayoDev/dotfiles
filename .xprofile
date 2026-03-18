@@ -1,4 +1,1 @@
-echo "xprofile ejecutado" >/tmp/xprofile-test
-
-~/dotfiles/scripts/mouse-fix.sh &
-~/dotfiles/scripts/monitors.sh &
+# Vacío — todo se maneja desde .xsession
