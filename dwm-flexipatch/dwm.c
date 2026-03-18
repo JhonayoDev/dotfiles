@@ -1649,7 +1649,7 @@ configurerequest(XEvent *e)
 		for (bar = m->bar; bar; bar = bar->next) {
 			if (bar->win == ev->window) {
 				wc.y = bar->by;
-				wc.x = bar->bx;
+				//wc.x = bar->bx;
 			}
 		}
 		#endif // BAR_ANYBAR_PATCH

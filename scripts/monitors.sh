@@ -27,7 +27,7 @@ elif [[ -z "$HDMI1" && -n "$HDMI2" ]]; then
 else
   # Solo Mac
   xrandr \
-    --output eDP-1 --mode 1920x1200 --scale 1.1x1.1 --primary \
+    --output eDP-1 --mode 1920x1200 --scale 1x1 --primary \
     --output HDMI-1 --off \
     --output HDMI-2 --off
 fi

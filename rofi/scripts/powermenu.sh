@@ -2,9 +2,10 @@
 
 THEME="$HOME/.config/rofi/themes/rounded-custom.rasi"
 
+# mover mouse al monitor activo
 options="Apagar\x00icon\x1fsystem-shutdown\nReiniciar\x00icon\x1fsystem-reboot\nCerrar sesión\x00icon\x1fsystem-log-out"
 
-chosen=$(echo -e "$options" | rofi -dmenu -p "Power" -theme "$THEME")
+chosen=$(echo -e "$options" | rofi -dmenu -p "Power" -m -4 -theme "$THEME")
 
 case "$chosen" in
 Apagar) systemctl poweroff ;;

@@ -151,4 +151,4 @@ configuration {
   show-icons: true;
   icon-theme: "Papirus";
   modes: "combi,drun,window,run";
-}
+ }
