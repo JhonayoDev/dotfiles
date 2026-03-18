@@ -259,3 +259,5 @@ export PATH="$PATH:$HOME/.pub-cache/bin"
 
 # Neovim (binario oficial)
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
+alias picom-start='picom --backend xrender --daemon'
+alias nv='nvim'
