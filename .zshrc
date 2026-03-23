@@ -261,3 +261,10 @@ export PATH="$PATH:$HOME/.pub-cache/bin"
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 alias picom-start='picom --backend xrender --daemon'
 alias nv='nvim'
+alias fix-bar='$HOME/dev/projects/desktop/eww-bar/eww/bar/scripts/launch-force'
+
+# SSH agent
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    eval "$(ssh-agent -s)" > /dev/null
+    ssh-add ~/.ssh/id_ed25519 2>/dev/null
+fi
