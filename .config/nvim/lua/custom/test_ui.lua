@@ -562,12 +562,18 @@ local function do_run(spec, label, ctx)
     table.insert(state.log_lines, "")
   end
   if ctx.parent_class then
-    table.insert(state.log_lines, "  ℹ Herencia: extends " .. ctx.parent_class)
+    table.insert(state.log_lines, "   Herencia: extends " .. ctx.parent_class)
     table.insert(state.log_lines, "    Tests heredados aparecen bajo la clase padre")
     table.insert(state.log_lines, "")
   end
   if ctx.framework == "junit4" then
-    table.insert(state.log_lines, "  JUnit 4" .. (ctx.runner and (" — @RunWith(" .. ctx.runner .. ")") or ""))
+    table.insert(state.log_lines, "   JUnit 4" .. (ctx.runner and (" — @RunWith(" .. ctx.runner .. ")") or ""))
+    -- Advertir limitación de filtrado por método con JUnit 4 + Surefire 3.x
+    -- El Vintage engine no puede satisfacer el filtro #método → corre la clase completa
+    if ctx.method then
+      table.insert(state.log_lines, "  ⚠ JUnit 4 + Surefire 3.x no soporta filtrar por método")
+      table.insert(state.log_lines, "    Se ejecutará la clase completa: " .. (ctx.root_class or ""))
+    end
     table.insert(state.log_lines, "")
   end
 
@@ -575,12 +581,12 @@ local function do_run(spec, label, ctx)
   local jenv = java_env_mod.check(vim.fn.getcwd())
   if jenv.required then
     if jenv.compatible then
-      table.insert(state.log_lines, "  Java " .. jenv.required .. " ✓")
+      table.insert(state.log_lines, "   Java " .. jenv.required .. " ✓")
     elseif jenv.missing then
       table.insert(state.log_lines, "  ✗ Java " .. jenv.required .. " requerido pero no instalado")
       table.insert(state.log_lines, "    Los tests pueden fallar — instalá con: sdk install java <ver>-tem")
     else
-      table.insert(state.log_lines, "  Java " .. jenv.required .. " requerido")
+      table.insert(state.log_lines, "   Java " .. jenv.required .. " requerido")
       table.insert(
         state.log_lines,
         "    Sistema: Java "
@@ -637,11 +643,11 @@ local function do_run(spec, label, ctx)
         table.insert(state.log_lines, "    Revisá 'Error creating bean' arriba")
       elseif analysis.no_tests then
         if ctx.parent_class then
-          table.insert(state.log_lines, "  ℹ 0 tests — posiblemente en clase padre: " .. ctx.parent_class)
+          table.insert(state.log_lines, "   0 tests — posiblemente en clase padre: " .. ctx.parent_class)
         elseif ctx.is_disabled then
-          table.insert(state.log_lines, "  ○ @Disabled — 0 tests es el comportamiento esperado")
+          table.insert(state.log_lines, "   @Disabled — 0 tests es el comportamiento esperado")
         else
-          table.insert(state.log_lines, "  ℹ 0 tests ejecutados — verificar spec de Maven")
+          table.insert(state.log_lines, "   0 tests ejecutados — verificar spec de Maven")
         end
       elseif analysis.build_success then
         table.insert(state.log_lines, "  ✓ BUILD SUCCESS")
