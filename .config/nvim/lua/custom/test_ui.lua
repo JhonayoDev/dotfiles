@@ -12,65 +12,66 @@
 local M = {}
 
 local context_mod = require("custom.test_context")
-local results_mod  = require("custom.test_results")
-local runner_mod   = require("custom.test_runner")
-local watcher_mod  = require("custom.test_watcher")
-local diff_mod     = require("custom.test_diff")
+local results_mod = require("custom.test_results")
+local runner_mod = require("custom.test_runner")
+local watcher_mod = require("custom.test_watcher")
+local diff_mod = require("custom.test_diff")
+local java_env_mod = require("custom.test_java_env")
 
 -- ─── Iconos Nerd Fonts v3 ─────────────────────────────────────────────────────
 
 local ICON = {
-  passed     = "✓ ",
-  failed     = "✗ ",
-  error      = "⚠ ",
-  skipped    = "○ ",
-  running    = "● ",
-  stale      = "~ ",   -- resultados desactualizados
-  fold_open  = "▼ ",
+  passed = "✓ ",
+  failed = "✗ ",
+  error = "⚠ ",
+  skipped = "○ ",
+  running = "● ",
+  stale = "~ ", -- resultados desactualizados
+  fold_open = "▼ ",
   fold_close = "▶ ",
-  child      = "├ ",
+  child = "├ ",
   child_last = "└ ",
-  pipe       = "│ ",
-  blank      = "  ",
+  pipe = "│ ",
+  blank = "  ",
 }
 
 -- ─── Highlights ───────────────────────────────────────────────────────────────
 
 local HL = {
-  header      = "Title",
-  class       = "Type",
-  passed      = "DiagnosticOk",
-  failed      = "DiagnosticError",
-  error       = "DiagnosticWarn",
-  skipped     = "Comment",
-  running     = "DiagnosticInfo",
-  stale       = "Comment",
-  message     = "DiagnosticVirtualTextError",
-  help        = "Comment",
-  separator   = "Comment",
-  log_error   = "DiagnosticError",
-  log_ok      = "DiagnosticOk",
-  log_info    = "DiagnosticInfo",
+  header = "Title",
+  class = "Type",
+  passed = "DiagnosticOk",
+  failed = "DiagnosticError",
+  error = "DiagnosticWarn",
+  skipped = "Comment",
+  running = "DiagnosticInfo",
+  stale = "Comment",
+  message = "DiagnosticVirtualTextError",
+  help = "Comment",
+  separator = "Comment",
+  log_error = "DiagnosticError",
+  log_ok = "DiagnosticOk",
+  log_info = "DiagnosticInfo",
 }
 
 -- ─── Estado ───────────────────────────────────────────────────────────────────
 
 local state = {
   -- ventanas y buffers
-  tree_buf     = nil,
-  tree_win     = nil,
-  out_buf      = nil,
-  out_win      = nil,
+  tree_buf = nil,
+  tree_win = nil,
+  out_buf = nil,
+  out_win = nil,
   -- árbol
-  lines        = {},
-  metadata     = {},
-  collapsed    = {},
+  lines = {},
+  metadata = {},
+  collapsed = {},
   -- ejecución
-  running      = false,
-  stale        = false,   -- true cuando hay resultados pero se inició un nuevo run
+  running = false,
+  stale = false, -- true cuando hay resultados pero se inició un nuevo run
   active_class = nil,
   -- log de Maven — acumula TODO el output, nunca se trunca
-  log_lines    = {},
+  log_lines = {},
 }
 
 -- ─── Layout dinámico ──────────────────────────────────────────────────────────
@@ -106,8 +107,12 @@ end
 
 -- Scroll el buffer de output al final
 local function scroll_output_to_end()
-  if not state.out_win or not vim.api.nvim_win_is_valid(state.out_win) then return end
-  if not state.out_buf or not vim.api.nvim_buf_is_valid(state.out_buf) then return end
+  if not state.out_win or not vim.api.nvim_win_is_valid(state.out_win) then
+    return
+  end
+  if not state.out_buf or not vim.api.nvim_buf_is_valid(state.out_buf) then
+    return
+  end
   local line_count = vim.api.nvim_buf_line_count(state.out_buf)
   vim.api.nvim_win_set_cursor(state.out_win, { line_count, 0 })
 end
@@ -121,26 +126,28 @@ end
 local function create_buf(name)
   local buf = vim.api.nvim_create_buf(false, true)
   buf_opt(buf, "bufhidden", "wipe")
-  buf_opt(buf, "buftype",   "nofile")
-  buf_opt(buf, "swapfile",  false)
+  buf_opt(buf, "buftype", "nofile")
+  buf_opt(buf, "swapfile", false)
   pcall(vim.api.nvim_buf_set_name, buf, name)
   return buf
 end
 
 local function setup_win(win)
-  win_opt(win, "number",         false)
+  win_opt(win, "number", false)
   win_opt(win, "relativenumber", false)
-  win_opt(win, "signcolumn",     "no")
-  win_opt(win, "wrap",           false)
-  win_opt(win, "cursorline",     true)
-  win_opt(win, "winfixheight",   true)
+  win_opt(win, "signcolumn", "no")
+  win_opt(win, "wrap", false)
+  win_opt(win, "cursorline", true)
+  win_opt(win, "winfixheight", true)
 end
 
 local function open_layout()
-  if is_open() then return end
+  if is_open() then
+    return
+  end
 
   state.tree_buf = create_buf("JavaTests://tree")
-  state.out_buf  = create_buf("JavaTests://output")
+  state.out_buf = create_buf("JavaTests://output")
 
   -- Split horizontal inferior ocupa PANEL_HEIGHT líneas
   vim.cmd("botright " .. PANEL_HEIGHT .. "split")
@@ -155,7 +162,7 @@ local function open_layout()
   setup_win(state.out_win)
   -- El panel de output sí puede hacer scroll — wrap off pero scrollable
   win_opt(state.out_win, "winfixwidth", true)
-  win_opt(state.out_win, "wrap",        false)
+  win_opt(state.out_win, "wrap", false)
   vim.api.nvim_win_set_width(state.out_win, out_width())
 
   -- Foco al árbol
@@ -163,8 +170,8 @@ local function open_layout()
 
   -- Cerrar ambos paneles si se cierra el árbol
   vim.api.nvim_create_autocmd("WinClosed", {
-    pattern  = tostring(state.tree_win),
-    once     = true,
+    pattern = tostring(state.tree_win),
+    once = true,
     callback = function()
       watcher_mod.stop()
       if state.out_win and vim.api.nvim_win_is_valid(state.out_win) then
@@ -172,8 +179,8 @@ local function open_layout()
       end
       state.tree_win = nil
       state.tree_buf = nil
-      state.out_win  = nil
-      state.out_buf  = nil
+      state.out_win = nil
+      state.out_buf = nil
     end,
   })
 end
@@ -185,7 +192,9 @@ end
 -- Al recibir nueva línea hace auto-scroll al final.
 
 local function render_log()
-  if not state.out_buf or not vim.api.nvim_buf_is_valid(state.out_buf) then return end
+  if not state.out_buf or not vim.api.nvim_buf_is_valid(state.out_buf) then
+    return
+  end
 
   -- Escribir todas las líneas del log en el buffer
   buf_set_lines(state.out_buf, state.log_lines)
@@ -228,27 +237,23 @@ end
 local function add_tests(lines, metadata, tests, indent, parent_class)
   local total = #tests
   for i, test in ipairs(tests) do
-    local is_last  = (i == total)
-    local prefix   = is_last and ICON.child_last or ICON.child
-    local t_icon   = state.stale and ICON.stale or (ICON[test.status] or ICON.error)
-    local time_str = test.time > 0
-      and string.format("%6.3fs", test.time) or "      "
+    local is_last = (i == total)
+    local prefix = is_last and ICON.child_last or ICON.child
+    local t_icon = state.stale and ICON.stale or (ICON[test.status] or ICON.error)
+    local time_str = test.time > 0 and string.format("%6.3fs", test.time) or "      "
 
     local max_name = 32 - indent
-    local name = #test.name > max_name
-      and test.name:sub(1, max_name - 1) .. "…"
-      or  test.name
+    local name = #test.name > max_name and test.name:sub(1, max_name - 1) .. "…" or test.name
 
-    table.insert(lines, string.format(
-      "%s%s%s%-" .. max_name .. "s  %s",
-      string.rep(" ", indent), prefix, t_icon, name, time_str
-    ))
+    table.insert(
+      lines,
+      string.format("%s%s%s%-" .. max_name .. "s  %s", string.rep(" ", indent), prefix, t_icon, name, time_str)
+    )
     metadata[#lines] = { kind = "test", test = test, class = parent_class }
 
     if test.message and not state.stale then
       local pipe = is_last and ICON.blank or ICON.pipe
-      local msg  = test.message:sub(1, 36 - indent)
-        .. (#test.message > 36 - indent and "…" or "")
+      local msg = test.message:sub(1, 36 - indent) .. (#test.message > 36 - indent and "…" or "")
       table.insert(lines, string.rep(" ", indent) .. pipe .. "  " .. msg)
       metadata[#lines] = { kind = "message", test = test }
     end
@@ -256,19 +261,23 @@ local function add_tests(lines, metadata, tests, indent, parent_class)
 end
 
 local function build_tree(results)
-  local lines    = {}
+  local lines = {}
   local metadata = {}
   local roots, order = results_mod.group_as_tree(results)
-  local stats    = results_mod.stats(results)
+  local stats = results_mod.stats(results)
 
   -- Header
-  local s_icon = state.stale and ICON.stale
-    or (stats.failed > 0 and ICON.failed or ICON.passed)
+  local s_icon = state.stale and ICON.stale or (stats.failed > 0 and ICON.failed or ICON.passed)
   local stale_note = state.stale and " (corriendo…)" or ""
   local header = string.format(
     "%s Tests  %s%d  %s%d  %d total%s",
-    s_icon, ICON.passed, stats.passed,
-    ICON.failed, stats.failed, stats.total, stale_note
+    s_icon,
+    ICON.passed,
+    stats.passed,
+    ICON.failed,
+    stats.failed,
+    stats.total,
+    stale_note
   )
   table.insert(lines, " " .. header)
   metadata[#lines] = { kind = "header" }
@@ -276,7 +285,7 @@ local function build_tree(results)
   metadata[#lines] = { kind = "separator" }
 
   for _, root in ipairs(order) do
-    local data      = roots[root]
+    local data = roots[root]
     local collapsed = state.collapsed[root]
 
     local total_count = #data.direct
@@ -286,19 +295,26 @@ local function build_tree(results)
 
     local has_fail = false
     for _, t in ipairs(data.direct) do
-      if t.status == "failed" or t.status == "error" then has_fail = true; break end
+      if t.status == "failed" or t.status == "error" then
+        has_fail = true
+        break
+      end
     end
     if not has_fail then
       for _, n_tests in pairs(data.nested) do
         for _, t in ipairs(n_tests) do
-          if t.status == "failed" or t.status == "error" then has_fail = true; break end
+          if t.status == "failed" or t.status == "error" then
+            has_fail = true
+            break
+          end
         end
-        if has_fail then break end
+        if has_fail then
+          break
+        end
       end
     end
 
-    local c_icon = state.stale and ICON.stale
-      or (has_fail and ICON.failed or ICON.passed)
+    local c_icon = state.stale and ICON.stale or (has_fail and ICON.failed or ICON.passed)
     local fold = collapsed and ICON.fold_close or ICON.fold_open
 
     if #data.nested_order > 0 or total_count > 0 then
@@ -312,22 +328,22 @@ local function build_tree(results)
       end
 
       for _, nested_name in ipairs(data.nested_order) do
-        local n_tests     = data.nested[nested_name]
-        local n_key       = root .. "$" .. nested_name
+        local n_tests = data.nested[nested_name]
+        local n_key = root .. "$" .. nested_name
         local n_collapsed = state.collapsed[n_key]
 
         local n_fail = false
         for _, t in ipairs(n_tests) do
-          if t.status == "failed" or t.status == "error" then n_fail = true; break end
+          if t.status == "failed" or t.status == "error" then
+            n_fail = true
+            break
+          end
         end
 
-        local n_icon = state.stale and ICON.stale
-          or (n_fail and ICON.failed or ICON.passed)
+        local n_icon = state.stale and ICON.stale or (n_fail and ICON.failed or ICON.passed)
         local n_fold = n_collapsed and ICON.fold_close or ICON.fold_open
 
-        table.insert(lines, string.format(
-          "   %s%s%s  (%d)", n_fold, n_icon, nested_name, #n_tests
-        ))
+        table.insert(lines, string.format("   %s%s%s  (%d)", n_fold, n_icon, nested_name, #n_tests))
         metadata[#lines] = { kind = "nested", class = n_key, root = root }
 
         if not n_collapsed then
@@ -352,14 +368,22 @@ local function apply_tree_highlights(buf, metadata)
   local ns = vim.api.nvim_create_namespace("java_test_tree")
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
   for i, meta in ipairs(metadata) do
-    if not meta then goto continue end
+    if not meta then
+      goto continue
+    end
     local lnum = i - 1
-    if     meta.kind == "header"    then hl_line(buf, ns, HL.header,    lnum)
-    elseif meta.kind == "separator" then hl_line(buf, ns, HL.separator, lnum)
-    elseif meta.kind == "help"      then hl_line(buf, ns, HL.help,      lnum)
-    elseif meta.kind == "class"     then hl_line(buf, ns, HL.class,     lnum)
-    elseif meta.kind == "nested"    then hl_line(buf, ns, HL.class,     lnum)
-    elseif meta.kind == "message"   then hl_line(buf, ns, HL.message,   lnum)
+    if meta.kind == "header" then
+      hl_line(buf, ns, HL.header, lnum)
+    elseif meta.kind == "separator" then
+      hl_line(buf, ns, HL.separator, lnum)
+    elseif meta.kind == "help" then
+      hl_line(buf, ns, HL.help, lnum)
+    elseif meta.kind == "class" then
+      hl_line(buf, ns, HL.class, lnum)
+    elseif meta.kind == "nested" then
+      hl_line(buf, ns, HL.class, lnum)
+    elseif meta.kind == "message" then
+      hl_line(buf, ns, HL.message, lnum)
     elseif meta.kind == "test" and meta.test then
       local grp = state.stale and HL.stale or (HL[meta.test.status] or "Normal")
       hl_line(buf, ns, grp, lnum)
@@ -369,11 +393,12 @@ local function apply_tree_highlights(buf, metadata)
 end
 
 local function refresh_tree()
-  if not state.tree_buf or not vim.api.nvim_buf_is_valid(state.tree_buf) then return end
+  if not state.tree_buf or not vim.api.nvim_buf_is_valid(state.tree_buf) then
+    return
+  end
 
-  local results = state.active_class
-    and results_mod.get_results_for_class(state.active_class)
-    or  results_mod.get_all_results()
+  local results = state.active_class and results_mod.get_results_for_class(state.active_class)
+    or results_mod.get_all_results()
 
   if #results == 0 then
     buf_set_lines(state.tree_buf, {
@@ -389,7 +414,7 @@ local function refresh_tree()
   end
 
   local lines, metadata = build_tree(results)
-  state.lines    = lines
+  state.lines = lines
   state.metadata = metadata
   buf_set_lines(state.tree_buf, lines)
   apply_tree_highlights(state.tree_buf, metadata)
@@ -398,25 +423,32 @@ end
 -- ─── Keymaps del árbol ────────────────────────────────────────────────────────
 
 local function goto_test()
-  if not state.tree_win or not vim.api.nvim_win_is_valid(state.tree_win) then return end
+  if not state.tree_win or not vim.api.nvim_win_is_valid(state.tree_win) then
+    return
+  end
   local lnum = vim.api.nvim_win_get_cursor(state.tree_win)[1]
   local meta = state.metadata[lnum]
-  if not meta or not meta.test then return end
+  if not meta or not meta.test then
+    return
+  end
   local test = meta.test
 
   local fqn_root = test.class:match("^(.-)%$") or test.class
-  local package  = fqn_root:match("^(.+)%.[^.]+$") or ""
+  local package = fqn_root:match("^(.+)%.[^.]+$") or ""
   local root_cls = fqn_root:match("([^.]+)$")
   local pkg_path = package:gsub("%.", "/")
-  local rel      = (pkg_path ~= "" and (pkg_path .. "/") or "") .. root_cls .. ".java"
+  local rel = (pkg_path ~= "" and (pkg_path .. "/") or "") .. root_cls .. ".java"
 
   local candidates = {
-    vim.fn.getcwd() .. "/src/test/java/"  .. rel,
+    vim.fn.getcwd() .. "/src/test/java/" .. rel,
     vim.fn.getcwd() .. "/src/main/java/" .. rel,
   }
   local target
   for _, p in ipairs(candidates) do
-    if vim.fn.filereadable(p) == 1 then target = p; break end
+    if vim.fn.filereadable(p) == 1 then
+      target = p
+      break
+    end
   end
   if not target then
     vim.notify("Archivo no encontrado: " .. rel, vim.log.levels.WARN)
@@ -428,7 +460,10 @@ local function goto_test()
   for _, w in ipairs(vim.api.nvim_list_wins()) do
     local is_panel = false
     for _, pw in ipairs(panel_wins) do
-      if w == pw then is_panel = true; break end
+      if w == pw then
+        is_panel = true
+        break
+      end
     end
     if not is_panel then
       vim.api.nvim_set_current_win(w)
@@ -448,10 +483,14 @@ local function goto_test()
 end
 
 local function toggle_class()
-  if not state.tree_win then return end
+  if not state.tree_win then
+    return
+  end
   local lnum = vim.api.nvim_win_get_cursor(state.tree_win)[1]
   local meta = state.metadata[lnum]
-  if not meta then return end
+  if not meta then
+    return
+  end
   if meta.kind == "class" or meta.kind == "nested" then
     state.collapsed[meta.class] = not state.collapsed[meta.class]
     refresh_tree()
@@ -459,7 +498,9 @@ local function toggle_class()
 end
 
 local function show_stacktrace()
-  if not state.tree_win then return end
+  if not state.tree_win then
+    return
+  end
   local lnum = vim.api.nvim_win_get_cursor(state.tree_win)[1]
   local meta = state.metadata[lnum]
   if not meta or not meta.test then
@@ -470,7 +511,9 @@ local function show_stacktrace()
 end
 
 local function show_diff()
-  if not state.tree_win then return end
+  if not state.tree_win then
+    return
+  end
   local lnum = vim.api.nvim_win_get_cursor(state.tree_win)[1]
   local meta = state.metadata[lnum]
   if not meta or not meta.test then
@@ -482,21 +525,23 @@ end
 
 local function setup_keymaps(buf)
   local o = { buffer = buf, silent = true, noremap = true }
-  vim.keymap.set("n", "<CR>",  goto_test,    vim.tbl_extend("force", o, { desc = "Ir al test"  }))
-  vim.keymap.set("n", "s",     show_stacktrace, vim.tbl_extend("force", o, { desc = "Stacktrace" }))
-  vim.keymap.set("n", "d",     show_diff,    vim.tbl_extend("force", o, { desc = "Diff"       }))
-  vim.keymap.set("n", "<Tab>", toggle_class, vim.tbl_extend("force", o, { desc = "Fold"       }))
-  vim.keymap.set("n", "r",     function() refresh_tree() end,
-    vim.tbl_extend("force", o, { desc = "Reload resultados" }))
-  vim.keymap.set("n", "q",     function() M.close() end,
-    vim.tbl_extend("force", o, { desc = "Cerrar" }))
+  vim.keymap.set("n", "<CR>", goto_test, vim.tbl_extend("force", o, { desc = "Ir al test" }))
+  vim.keymap.set("n", "s", show_stacktrace, vim.tbl_extend("force", o, { desc = "Stacktrace" }))
+  vim.keymap.set("n", "d", show_diff, vim.tbl_extend("force", o, { desc = "Diff" }))
+  vim.keymap.set("n", "<Tab>", toggle_class, vim.tbl_extend("force", o, { desc = "Fold" }))
+  vim.keymap.set("n", "r", function()
+    refresh_tree()
+  end, vim.tbl_extend("force", o, { desc = "Reload resultados" }))
+  vim.keymap.set("n", "q", function()
+    M.close()
+  end, vim.tbl_extend("force", o, { desc = "Cerrar" }))
 end
 
 -- ─── Orquestación: correr tests ───────────────────────────────────────────────
 
 local function do_run(spec, label, ctx)
   -- 1. Marcar resultados actuales como desactualizados
-  state.stale   = true
+  state.stale = true
   state.running = true
 
   -- 2. Inicializar log con header informativo
@@ -522,9 +567,36 @@ local function do_run(spec, label, ctx)
     table.insert(state.log_lines, "")
   end
   if ctx.framework == "junit4" then
-    table.insert(state.log_lines, "  ℹ JUnit 4" .. (ctx.runner and (" — @RunWith(" .. ctx.runner .. ")") or ""))
+    table.insert(state.log_lines, "  JUnit 4" .. (ctx.runner and (" — @RunWith(" .. ctx.runner .. ")") or ""))
     table.insert(state.log_lines, "")
   end
+
+  -- Info de Java env: versión requerida, la que usará Maven, ajuste automático
+  local jenv = java_env_mod.check(vim.fn.getcwd())
+  if jenv.required then
+    if jenv.compatible then
+      table.insert(state.log_lines, "  Java " .. jenv.required .. " ✓")
+    elseif jenv.missing then
+      table.insert(state.log_lines, "  ✗ Java " .. jenv.required .. " requerido pero no instalado")
+      table.insert(state.log_lines, "    Los tests pueden fallar — instalá con: sdk install java <ver>-tem")
+    else
+      table.insert(state.log_lines, "  Java " .. jenv.required .. " requerido")
+      table.insert(
+        state.log_lines,
+        "    Sistema: Java "
+          .. (jenv.maven or "?")
+          .. " → runner usará Java "
+          .. jenv.required
+          .. " automáticamente"
+      )
+    end
+  elseif jenv.pom_unversioned then
+    table.insert(
+      state.log_lines,
+      "  ⚠ pom.xml sin versión Java — usando Java " .. (jenv.maven or "?") .. " del sistema"
+    )
+  end
+  table.insert(state.log_lines, "")
 
   -- 3. Abrir panel y mostrar estado inicial
   M.show()
@@ -554,7 +626,7 @@ local function do_run(spec, label, ctx)
     on_exit = function(exit_code, analysis)
       watcher_mod.stop()
       state.running = false
-      state.stale   = false
+      state.stale = false
 
       -- Agregar resumen al final del log (no reemplaza — se acumula)
       table.insert(state.log_lines, "")
@@ -605,7 +677,11 @@ function M.close()
 end
 
 function M.toggle()
-  if is_open() then M.close() else M.show() end
+  if is_open() then
+    M.close()
+  else
+    M.show()
+  end
 end
 
 function M.refresh()
@@ -653,8 +729,7 @@ function M.run_all()
     return
   end
   state.active_class = nil
-  local ctx = { is_spring = false, is_disabled = false, parent_class = nil,
-                framework = "junit5", runner = nil }
+  local ctx = { is_spring = false, is_disabled = false, parent_class = nil, framework = "junit5", runner = nil }
   do_run("", "todos los tests", ctx)
 end
 

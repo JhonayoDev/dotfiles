@@ -12,10 +12,13 @@
 
 local M = {}
 
+-- Delegar detección de Java al módulo especializado
+local java_env = require("custom.test_java_env")
+
 -- ─── Estado interno ───────────────────────────────────────────────────────────
 
 local state = {
-  job_id  = nil,
+  job_id = nil,
   running = false,
 }
 
@@ -28,6 +31,17 @@ local function maven_cmd(cwd)
     return "sh ./mvnw"
   end
   return "mvn"
+end
+
+-- Determina el JAVA_HOME correcto para el proyecto.
+-- Delega a test_java_env que tiene la lógica completa de detección.
+local function resolve_java_home(cwd)
+  local java_home = java_env.java_home_for(cwd)
+  if java_home then
+    local env = java_env.check(cwd)
+    vim.notify(" usando Java " .. (env.required or "?") .. " para este proyecto", vim.log.levels.INFO)
+  end
+  return java_home
 end
 
 -- Patrones de líneas que no aportan información útil al usuario.
@@ -46,7 +60,9 @@ local NOISE_PATTERNS = {
 
 local function is_noise(line)
   for _, pat in ipairs(NOISE_PATTERNS) do
-    if line:match(pat) then return true end
+    if line:match(pat) then
+      return true
+    end
   end
   return false
 end
@@ -54,16 +70,24 @@ end
 -- Detecta condiciones especiales en el output acumulado
 local function analyze_output(lines)
   local result = {
-    no_tests       = false,
+    no_tests = false,
     context_failed = false,
-    build_success  = false,
+    build_success = false,
   }
   for _, line in ipairs(lines) do
-    if line:match("No tests were executed")         then result.no_tests       = true end
-    if line:match("BUILD SUCCESS")                  then result.build_success  = true end
-    if line:match("Unable to start ApplicationContext")
-    or line:match("Error creating bean")
-    or line:match("APPLICATION FAILED TO START")    then result.context_failed = true end
+    if line:match("No tests were executed") then
+      result.no_tests = true
+    end
+    if line:match("BUILD SUCCESS") then
+      result.build_success = true
+    end
+    if
+      line:match("Unable to start ApplicationContext")
+      or line:match("Error creating bean")
+      or line:match("APPLICATION FAILED TO START")
+    then
+      result.context_failed = true
+    end
   end
   return result
 end
@@ -79,7 +103,7 @@ end
 function M.cancel()
   if state.job_id then
     vim.fn.jobstop(state.job_id)
-    state.job_id  = nil
+    state.job_id = nil
     state.running = false
   end
 end
@@ -99,17 +123,22 @@ function M.run(spec, opts)
   end
 
   opts = opts or {}
-  local cwd       = opts.cwd or vim.fn.getcwd()
-  local on_line   = opts.on_line  or function() end
-  local on_exit   = opts.on_exit  or function() end
+  local cwd = opts.cwd or vim.fn.getcwd()
+  local on_line = opts.on_line or function() end
+  local on_exit = opts.on_exit or function() end
 
-  local mvn      = maven_cmd(cwd)
+  local mvn = maven_cmd(cwd)
   local test_arg = spec ~= "" and ("-Dtest='" .. spec .. "'") or ""
+
+  -- Detectar si el proyecto requiere un Java distinto al actual
+  -- Ej: pom.xml con maven.compiler.release=8 en un sistema con Java 21
+  local java_home = resolve_java_home(cwd)
 
   -- Script minimal sin pipe — preserva el exit code de Maven
   -- y evita problemas de buffering con proyectos JUnit 4
-  local script_file    = vim.fn.tempname() .. ".sh"
-  local script_content = "#!/bin/sh\n" .. mvn .. " test " .. test_arg .. "\n"
+  local script_file = vim.fn.tempname() .. ".sh"
+  local java_export = java_home and ("export JAVA_HOME='" .. java_home .. "'\n") or ""
+  local script_content = "#!/bin/sh\n" .. java_export .. mvn .. " test " .. test_arg .. "\n"
 
   local sf = io.open(script_file, "w")
   if sf then
@@ -122,13 +151,15 @@ function M.run(spec, opts)
   end
 
   state.running = true
-  state.job_id  = nil
+  state.job_id = nil
 
   -- Acumular output para el análisis final
   local accumulated = {}
 
   local function handle_data(data)
-    if not data then return end
+    if not data then
+      return
+    end
     vim.schedule(function()
       for _, line in ipairs(data) do
         if line ~= "" and not is_noise(line) then
@@ -140,16 +171,20 @@ function M.run(spec, opts)
   end
 
   state.job_id = vim.fn.jobstart({ "sh", script_file }, {
-    cwd             = cwd,
+    cwd = cwd,
     stdout_buffered = false,
     stderr_buffered = false,
-    on_stdout       = function(_, data) handle_data(data) end,
-    on_stderr       = function(_, data) handle_data(data) end,
+    on_stdout = function(_, data)
+      handle_data(data)
+    end,
+    on_stderr = function(_, data)
+      handle_data(data)
+    end,
 
     on_exit = function(_, exit_code)
       vim.schedule(function()
         state.running = false
-        state.job_id  = nil
+        state.job_id = nil
         vim.fn.delete(script_file)
 
         -- Dar 300ms para que el SO flushee los XMLs en surefire-reports/
