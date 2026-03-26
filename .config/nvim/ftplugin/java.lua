@@ -204,6 +204,36 @@ local config = {
       end, vim.tbl_extend("force", opts, { desc = "Debug Test Method (Full UI)" }))
     end
     -- ============================================================
+    -- Test UI Panel (test_ui.lua)
+    -- ============================================================
+    local ui_ok, test_ui = pcall(require, "custom.test_ui")
+    if ui_ok then
+      -- Registrar grupo en which-key
+      if wk_ok then
+        wk.add({ { "<leader>cTp", group = "Panel", buffer = bufnr } })
+      end
+
+      vim.keymap.set("n", "<leader>cTp", function()
+        test_ui.toggle()
+      end, vim.tbl_extend("force", opts, { desc = "Toggle Test Panel" }))
+
+      vim.keymap.set("n", "<leader>cTpc", function()
+        test_ui.run_class()
+      end, vim.tbl_extend("force", opts, { desc = "Run Class (Panel)" }))
+
+      vim.keymap.set("n", "<leader>cTpm", function()
+        test_ui.run_method()
+      end, vim.tbl_extend("force", opts, { desc = "Run Method (Panel)" }))
+
+      vim.keymap.set("n", "<leader>cTpa", function()
+        test_ui.run_all()
+      end, vim.tbl_extend("force", opts, { desc = "Run All (Panel)" }))
+    end
+    vim.keymap.set("n", "<leader>cTj", function()
+      require("custom.test_java_env").show_panel()
+    end, vim.tbl_extend("force", opts, { desc = "Java Environment" }))
+
+    -- ============================================================
     -- JDTLS: Project Management
     -- ============================================================
     vim.keymap.set("n", "<leader>co", function()

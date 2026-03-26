@@ -325,7 +325,7 @@ function M.build_spec(ctx, with_method)
   for _, nested in ipairs(ctx.nested_chain) do
     table.insert(parts, nested)
   end
-  local class_spec = table.concat(parts, "\\$")
+  local class_spec = table.concat(parts, "$")
 
   -- ── Con método ──────────────────────────────────────────────────────────
   if with_method and ctx.method then
