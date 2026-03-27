@@ -228,6 +228,10 @@ local config = {
       vim.keymap.set("n", "<leader>cTpa", function()
         test_ui.run_all()
       end, vim.tbl_extend("force", opts, { desc = "Run All (Panel)" }))
+      vim.keymap.set("n", "<leader>cTpx", function()
+        require("custom.test_runner").cancel()
+        vim.notify("Ejecución cancelada", vim.log.levels.WARN)
+      end, vim.tbl_extend("force", opts, { desc = "Cancel Run (Panel)" }))
     end
     vim.keymap.set("n", "<leader>cTj", function()
       require("custom.test_java_env").show_panel()
