@@ -116,6 +116,12 @@ local config = {
 
   on_attach = function(client, bufnr)
     -- Verificar que nvim-dap está disponible antes de configurarlo
+
+    -- Sincronizar runtime Java automáticamente
+    vim.defer_fn(function()
+      require("custom.java_runtime").sync(vim.fn.getcwd())
+    end, 500) -- 500ms para dar tiempo a que jdtls termine de iniciar
+
     local dap_ok, dap = pcall(require, "dap")
     if dap_ok then
       jdtls.setup_dap({ hotcodereplace = "auto" })
@@ -133,6 +139,7 @@ local config = {
     if wk_ok then
       wk.add({
         { "<leader>cT", group = "Test" },
+        { "<leader>cTd", group = "Dap" },
         { "<leader>ce", group = "Extract", buffer = bufnr },
       })
     end
@@ -180,12 +187,12 @@ local config = {
       -- ============================================================
       -- Test SIN debug (solo Console - layout 2)
       -- ============================================================
-      vim.keymap.set("n", "<leader>cTc", function()
+      vim.keymap.set("n", "<leader>cTdc", function()
         require("jdtls.dap").test_class()
         require("dapui").open({ layout = 2 })
       end, vim.tbl_extend("force", opts, { desc = "Test Class (Console)" }))
 
-      vim.keymap.set("n", "<leader>cTm", function()
+      vim.keymap.set("n", "<leader>cTdm", function()
         require("jdtls.dap").test_nearest_method()
         require("dapui").open({ layout = 2 })
       end, vim.tbl_extend("force", opts, { desc = "Test Method (Console)" }))
@@ -193,12 +200,12 @@ local config = {
       -- ============================================================
       -- Test CON debug (UI completa - ambos layouts)
       -- ============================================================
-      vim.keymap.set("n", "<leader>cTC", function()
+      vim.keymap.set("n", "<leader>cTdC", function()
         require("jdtls.dap").test_class()
         require("dapui").open() -- Sin especificar layout = abre todo
       end, vim.tbl_extend("force", opts, { desc = "Debug Test Class (Full UI)" }))
 
-      vim.keymap.set("n", "<leader>cTM", function()
+      vim.keymap.set("n", "<leader>cTdM", function()
         require("jdtls.dap").test_nearest_method()
         require("dapui").open() -- Sin especificar layout = abre todo
       end, vim.tbl_extend("force", opts, { desc = "Debug Test Method (Full UI)" }))
@@ -207,35 +214,32 @@ local config = {
     -- Test UI Panel (test_ui.lua)
     -- ============================================================
     local ui_ok, test_ui = pcall(require, "custom.test_ui")
-    if ui_ok then
-      -- Registrar grupo en which-key
-      if wk_ok then
-        wk.add({ { "<leader>cTp", group = "Panel", buffer = bufnr } })
-      end
+    vim.keymap.set("n", "<leader>cJ", function()
+      require("custom.test_java_env").show_panel()
+    end, vim.tbl_extend("force", opts, { desc = "Java Environment" }))
 
+    if ui_ok then
       vim.keymap.set("n", "<leader>cTp", function()
         test_ui.toggle()
       end, vim.tbl_extend("force", opts, { desc = "Toggle Test Panel" }))
 
-      vim.keymap.set("n", "<leader>cTpc", function()
-        test_ui.run_class()
-      end, vim.tbl_extend("force", opts, { desc = "Run Class (Panel)" }))
-
-      vim.keymap.set("n", "<leader>cTpm", function()
-        test_ui.run_method()
-      end, vim.tbl_extend("force", opts, { desc = "Run Method (Panel)" }))
-
-      vim.keymap.set("n", "<leader>cTpa", function()
-        test_ui.run_all()
-      end, vim.tbl_extend("force", opts, { desc = "Run All (Panel)" }))
-      vim.keymap.set("n", "<leader>cTpx", function()
+      vim.keymap.set("n", "<leader>cTx", function()
         require("custom.test_runner").cancel()
         vim.notify("Ejecución cancelada", vim.log.levels.WARN)
       end, vim.tbl_extend("force", opts, { desc = "Cancel Run (Panel)" }))
+
+      vim.keymap.set("n", "<leader>cTc", function()
+        test_ui.run_class()
+      end, vim.tbl_extend("force", opts, { desc = "Run Class (Panel)" }))
+
+      vim.keymap.set("n", "<leader>cTm", function()
+        test_ui.run_method()
+      end, vim.tbl_extend("force", opts, { desc = "Run Method (Panel)" }))
+
+      vim.keymap.set("n", "<leader>cTa", function()
+        test_ui.run_all()
+      end, vim.tbl_extend("force", opts, { desc = "Run All (Panel)" }))
     end
-    vim.keymap.set("n", "<leader>cTj", function()
-      require("custom.test_java_env").show_panel()
-    end, vim.tbl_extend("force", opts, { desc = "Java Environment" }))
 
     -- ============================================================
     -- JDTLS: Project Management
@@ -268,6 +272,10 @@ local config = {
     end, vim.tbl_extend("force", opts, { desc = "Extract Constant" }))
 
     vim.keymap.set("v", "<leader>cem", function() -- ← crm -> cem
+      jdtls.extract_method(true)
+    end, vim.tbl_extend("force", opts, { desc = "Extract Method" }))
+
+    vim.keymap.set("n", "<leader>cem", function() -- ← crm -> cem
       jdtls.extract_method(true)
     end, vim.tbl_extend("force", opts, { desc = "Extract Method" }))
   end,
