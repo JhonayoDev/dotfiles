@@ -12,6 +12,16 @@
 
 local M = {}
 
+-- Importar java_runtime para mostrar el runtime activo sincronizado
+-- pcall para evitar error circular si java_runtime no está disponible aún
+local function get_active_runtime()
+  local ok, jr = pcall(require, "custom.java_runtime")
+  if ok then
+    return jr.get_active()
+  end
+  return nil
+end
+
 -- ─── Leer pom.xml ─────────────────────────────────────────────────────────────
 
 ---Lee la versión Java requerida por el pom.xml del proyecto.
@@ -314,6 +324,21 @@ function M.show_panel()
     add("  jdtls    : no activo en este buffer")
   end
 
+  -- Runtime activo sincronizado por java_runtime.lua
+  local active = get_active_runtime()
+  if active then
+    add("")
+    add("  " .. string.rep("─", 44))
+    add("  Runtime sincronizado (java_runtime):")
+    add("")
+    local a_icon = (active.major == env.required) and "✓" or "⚠"
+    add("  " .. a_icon .. " Java " .. active.major .. "  —  " .. active.name)
+    add("    jdtls  ✓  Maven  ✓  DAP  ✓")
+    if active.java_home and active.java_home ~= "" then
+      add("    " .. active.java_home)
+    end
+  end
+
   add("")
   add("  " .. string.rep("─", 44))
   add("  JDKs disponibles en sdkman:")
@@ -339,7 +364,7 @@ function M.show_panel()
 
   -- Resumen final
   if not env.has_pom then
-    add("  ℹ Sin pom.xml — usando Java " .. (env.maven or "?") .. " del sistema")
+    add("    Sin pom.xml — usando Java " .. (env.maven or "?") .. " del sistema")
   elseif env.pom_unversioned then
     add("  ⚠ pom.xml sin versión — declararla evita sorpresas")
   elseif env.missing then
@@ -380,7 +405,7 @@ function M.show_panel()
     row = row,
     col = col,
     border = "rounded",
-    title = "  Java Environment ",
+    title = " Java Environment ",
     title_pos = "center",
   })
 
