@@ -26,6 +26,7 @@ local java_env = require("custom.test_java_env")
 
 local state = {
   active = nil, -- { name, java_home, major }  runtime activo actualmente
+  last_cwd = nil,
 }
 
 -- ─── Mapeo de versiones ───────────────────────────────────────────────────────
@@ -143,6 +144,10 @@ end
 function M.sync(cwd)
   cwd = cwd or vim.fn.getcwd()
   local env = java_env.check(cwd)
+  if state.last_cwd == cwd then
+    return
+  end
+  state.last_cwd = cwd
 
   -- Sin requerimiento declarado en pom.xml
   if not env.required then
