@@ -145,7 +145,6 @@ local function open_layout()
   if is_open() then
     return
   end
-
   state.tree_buf = create_buf("JavaTests://tree")
   state.out_buf = create_buf("JavaTests://output")
 
@@ -155,6 +154,7 @@ local function open_layout()
   vim.api.nvim_win_set_buf(state.tree_win, state.tree_buf)
   setup_win(state.tree_win)
 
+  state.tree_width = vim.api.nvim_win_get_width(state.tree_win)
   -- Panel derecho: 40% del ancho total
   vim.cmd("vsplit")
   state.out_win = vim.api.nvim_get_current_win()
@@ -242,7 +242,10 @@ local function add_tests(lines, metadata, tests, indent, parent_class)
     local t_icon = state.stale and ICON.stale or (ICON[test.status] or ICON.error)
     local time_str = test.time > 0 and string.format("%6.3fs", test.time) or "      "
 
-    local max_name = 32 - indent
+    local tree_width = (state.tree_win and vim.api.nvim_win_is_valid(state.tree_win))
+        and vim.api.nvim_win_get_width(state.tree_win)
+      or math.floor(vim.o.columns * 0.60)
+    local max_name = math.max(10, tree_width - indent - 12)
     local name = #test.name > max_name and test.name:sub(1, max_name - 1) .. "…" or test.name
 
     table.insert(
@@ -265,7 +268,7 @@ local function build_tree(results)
   local metadata = {}
   local roots, order = results_mod.group_as_tree(results)
   local stats = results_mod.stats(results)
-
+  local sep_width = vim.o.columns - out_width() - 4
   -- Header
   local s_icon = state.stale and ICON.stale or (stats.failed > 0 and ICON.failed or ICON.passed)
   local stale_note = state.stale and " (corriendo…)" or ""
@@ -281,7 +284,7 @@ local function build_tree(results)
   )
   table.insert(lines, " " .. header)
   metadata[#lines] = { kind = "header" }
-  table.insert(lines, " " .. string.rep("─", 50))
+  table.insert(lines, " " .. string.rep("─", sep_width))
   metadata[#lines] = { kind = "separator" }
 
   for _, root in ipairs(order) do
