@@ -438,10 +438,14 @@ local function goto_test()
 
   local fqn_root = test.class:match("^(.-)%$") or test.class
   local package = fqn_root:match("^(.+)%.[^.]+$") or ""
-  local root_cls = fqn_root:match("([^.]+)$")
   local pkg_path = package:gsub("%.", "/")
-  local rel = (pkg_path ~= "" and (pkg_path .. "/") or "") .. root_cls .. ".java"
 
+  -- Paso 1: intentar leer el archivo desde el stacktrace
+  -- Cubre múltiples clases en un mismo archivo Java
+  local file_from_stack = test.stacktrace and test.stacktrace:match("%(([%w]+%.java):%d+%)")
+  local root_cls = file_from_stack and file_from_stack:gsub("%.java$", "") or fqn_root:match("([^.]+)$")
+
+  local rel = (pkg_path ~= "" and (pkg_path .. "/") or "") .. root_cls .. ".java"
   local candidates = {
     vim.fn.getcwd() .. "/src/test/java/" .. rel,
     vim.fn.getcwd() .. "/src/main/java/" .. rel,
@@ -453,6 +457,33 @@ local function goto_test()
       break
     end
   end
+
+  -- Paso 2: buscar por nombre de clase en todo src/
+  if not target then
+    local simple_cls = fqn_root:match("([^.]+)$")
+    local found = vim.fn.glob(vim.fn.getcwd() .. "/src/**/" .. simple_cls .. ".java", false, true)
+    if #found > 0 then
+      target = found[1]
+    end
+  end
+
+  -- Paso 3: buscar el archivo que contiene la declaración de la clase
+  if not target then
+    local simple_cls = fqn_root:match("([^.]+)$")
+    local all_files = vim.fn.glob(vim.fn.getcwd() .. "/src/**/*.java", false, true)
+    for _, f in ipairs(all_files) do
+      for _, line in ipairs(vim.fn.readfile(f)) do
+        if line:match("class%s+" .. simple_cls .. "[%s{]") then
+          target = f
+          break
+        end
+      end
+      if target then
+        break
+      end
+    end
+  end
+
   if not target then
     vim.notify("Archivo no encontrado: " .. rel, vim.log.levels.WARN)
     return
