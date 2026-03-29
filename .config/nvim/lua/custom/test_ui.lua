@@ -245,7 +245,7 @@ local function add_tests(lines, metadata, tests, indent, parent_class)
     local tree_width = (state.tree_win and vim.api.nvim_win_is_valid(state.tree_win))
         and vim.api.nvim_win_get_width(state.tree_win)
       or math.floor(vim.o.columns * 0.60)
-    local max_name = math.max(10, tree_width - indent - 12)
+    local max_name = math.max(10, math.min(60, tree_width - indent - 12))
     local name = #test.name > max_name and test.name:sub(1, max_name - 1) .. "…" or test.name
 
     table.insert(
