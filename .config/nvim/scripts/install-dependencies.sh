@@ -3,7 +3,7 @@
 
 set -e # Exit on error
 
-echo "🚀 Installing Neovim dependencies..."
+echo " Installing Neovim dependencies..."
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -150,7 +150,7 @@ main() {
 
   # Agregar al final de install-dependencies.sh
   echo ""
-  echo "🔍 Verification:"
+  echo " Verification:"
   echo "  lazygit:     $(which lazygit 2>/dev/null || echo 'NOT INSTALLED')"
   echo "  lazydocker:  $(which lazydocker 2>/dev/null || echo 'NOT INSTALLED')"
   echo "  java:        $(which java 2>/dev/null || echo 'NOT INSTALLED')"
