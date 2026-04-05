@@ -129,8 +129,8 @@ source $ZSH/oh-my-zsh.sh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+#export SDKMAN_DIR="$HOME/.sdkman"
+#[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # ========================================
 # ALIAS PERSONALIZADOS
@@ -267,4 +267,12 @@ alias fix-bar='$HOME/dev/projects/desktop/eww-bar/eww/bar/scripts/launch-force'
 if [ -z "$SSH_AUTH_SOCK" ]; then
     eval "$(ssh-agent -s)" > /dev/null
     ssh-add ~/.ssh/id_ed25519 2>/dev/null
+fi
+# En ~/.zshrc, reemplazá la línea actual por esto:
+if [ -z "$SDKMAN_DIR" ]; then
+  if [ -d "/usr/local/sdkman" ]; then
+    export SDKMAN_DIR="/usr/local/sdkman"
+  elif [ -d "$HOME/.sdkman" ]; then
+    export SDKMAN_DIR="$HOME/.sdkman"
+  fi
 fi
