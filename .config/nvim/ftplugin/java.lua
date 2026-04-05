@@ -1,4 +1,5 @@
 local home = os.getenv("HOME")
+local sdkman = os.getenv("SDKMAN_DIR") or (home .. "/.sdkman")
 local jdtls = require("jdtls")
 
 -- Nombre del proyecto basado en el directorio actual
@@ -38,7 +39,7 @@ extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
 -- Configuración principal
 local config = {
   cmd = {
-    home .. "/.sdkman/candidates/java/21.0.8-tem/bin/java",
+    sdkman .. "/candidates/java/21.0.8-tem/bin/java",
     "-Declipse.application=org.eclipse.jdt.ls.core.id1",
     "-Dosgi.bundles.defaultStartLevel=4",
     "-Declipse.product=org.eclipse.jdt.ls.core.product",
@@ -63,24 +64,20 @@ local config = {
 
   settings = {
     java = {
-      home = home .. "/.sdkman/candidates/java/21.0.8-tem",
-      eclipse = {
-        downloadSources = true,
-      },
+      home = sdkman .. "/candidates/java/21.0.8-tem",
       configuration = {
-        updateBuildConfiguration = "interactive",
         runtimes = {
           {
             name = "JavaSE-1.8",
-            path = home .. "/.sdkman/candidates/java/8.0.482-tem",
+            path = sdkman .. "/candidates/java/8.0.482-tem",
           },
           {
             name = "JavaSE-17",
-            path = home .. "/.sdkman/candidates/java/17.0.16-tem",
+            path = sdkman .. "/candidates/java/17.0.16-tem",
           },
           {
             name = "JavaSE-21",
-            path = home .. "/.sdkman/candidates/java/21.0.8-tem",
+            path = sdkman .. "/candidates/java/21.0.8-tem",
             default = true,
           },
         },
