@@ -1,9 +1,9 @@
 -- Al inicio de java.lua, reemplazá las líneas de home y sdkman
 local home = os.getenv("HOME")
+local jdtls = require("jdtls")
 local sdkman = os.getenv("SDKMAN_DIR")
   or (vim.fn.isdirectory("/usr/local/sdkman") == 1 and "/usr/local/sdkman")
   or (home .. "/.sdkman")
-
 -- Nombre del proyecto basado en el directorio actual
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
 local workspace_dir = home .. "/.cache/nvim/jdtls/" .. project_name
