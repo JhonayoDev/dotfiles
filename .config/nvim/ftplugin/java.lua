@@ -8,6 +8,28 @@ local sdkman = os.getenv("SDKMAN_DIR")
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
 local workspace_dir = home .. "/.cache/nvim/jdtls/" .. project_name
 
+-- Busca dinámicamente la version instalada de java dado un prefijo
+-- Ejemplo: find_java_version("21") → "21.0.10-ms"
+local function find_java_version(major)
+  local candidates_dir = sdkman .. "/candidates/java"
+  local handle = io.popen("ls " .. candidates_dir .. " 2>/dev/null")
+  if not handle then
+    return nil
+  end
+  local result = handle:read("*a")
+  handle:close()
+  for version in result:gmatch("[^\n]+") do
+    if version:match("^" .. major .. "%.") and version ~= "current" then
+      return candidates_dir .. "/" .. version
+    end
+  end
+  return nil
+end
+
+local java21 = find_java_version("21") or sdkman .. "/candidates/java/current"
+local java17 = find_java_version("17")
+local java8 = find_java_version("8")
+
 -- ============================================================
 -- BUNDLES CONFIGURATION (siguiendo documentación oficial)
 -- ============================================================
@@ -41,7 +63,7 @@ extendedClientCapabilities.resolveAdditionalTextEditsSupport = true
 -- Configuración principal
 local config = {
   cmd = {
-    sdkman .. "/candidates/java/21.0.8-tem/bin/java",
+    java21 .. "/bin/java",
     "-Declipse.application=org.eclipse.jdt.ls.core.id1",
     "-Dosgi.bundles.defaultStartLevel=4",
     "-Declipse.product=org.eclipse.jdt.ls.core.product",
@@ -66,20 +88,20 @@ local config = {
 
   settings = {
     java = {
-      home = sdkman .. "/candidates/java/21.0.8-tem",
+      home = java21,
       configuration = {
         runtimes = {
-          {
+          java8 and {
             name = "JavaSE-1.8",
-            path = sdkman .. "/candidates/java/8.0.482-tem",
-          },
-          {
+            path = java8,
+          } or nil,
+          java17 and {
             name = "JavaSE-17",
-            path = sdkman .. "/candidates/java/17.0.16-tem",
-          },
+            path = java17,
+          } or nil,
           {
             name = "JavaSE-21",
-            path = sdkman .. "/candidates/java/21.0.8-tem",
+            path = java21,
             default = true,
           },
         },
