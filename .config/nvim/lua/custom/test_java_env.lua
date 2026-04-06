@@ -11,6 +11,7 @@
 --   M.java_home_for(cwd) → string|nil  JAVA_HOME a usar para Maven
 
 local M = {}
+local sdkman = require("custom.java_sdkman")
 
 -- Importar java_runtime para mostrar el runtime activo sincronizado
 -- pcall para evitar error circular si java_runtime no está disponible aún
@@ -111,9 +112,9 @@ end
 local function read_maven_version()
   local java_home = os.getenv("JAVA_HOME")
 
-  -- Fallback 1: sdkman current symlink
+  -- Fallback: sdkman current symlink (ruta dinámica, no hardcodeada)
   if not java_home or java_home == "" then
-    local sdkman_current = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java/current"
+    local sdkman_current = sdkman.candidates_dir() .. "/current"
     local link = vim.fn.resolve(sdkman_current)
     if link ~= sdkman_current then
       java_home = link
@@ -122,18 +123,17 @@ local function read_maven_version()
 
   -- Intentar extraer versión del path
   if java_home and java_home ~= "" then
-    local version = java_home:match("/java/(%d+)%.") or java_home:match("/java/(%d+)$") or java_home:match("%-(%d+)%-") -- ej: temurin-21-...
+    local version = java_home:match("/java/(%d+)%.") or java_home:match("/java/(%d+)$") or java_home:match("%-(%d+)%-")
     if version then
       return version, java_home
     end
   end
 
-  -- Fallback 2: ejecutar java -version y parsear el output
+  -- Fallback: ejecutar java -version y parsear el output
   local handle = io.popen("java -version 2>&1")
   if handle then
     local output = handle:read("*a")
     handle:close()
-    -- 'java version "21.0.8"' o 'openjdk version "1.8.0_402"'
     local ver_str = output:match('"(%d+)[."]') or output:match('"1%.(%d+)')
     if ver_str then
       return ver_str, java_home or "PATH"
@@ -148,40 +148,7 @@ end
 ---Devuelve lista de JDKs instalados en sdkman.
 ---@return table[]  lista de { version="21", path="...", is_current=bool }
 local function list_sdkman_javas()
-  local sdkman_dir = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java"
-  local handle = io.popen("ls " .. sdkman_dir .. " 2>/dev/null")
-  if not handle then
-    return {}
-  end
-
-  local current_link = vim.fn.resolve(sdkman_dir .. "/current")
-  local result = {}
-
-  for line in handle:lines() do
-    local name = vim.trim(line)
-    if name ~= "" and name ~= "current" then
-      local path = sdkman_dir .. "/" .. name
-      local major = name:match("^(%d+)%.") or name:match("^(%d+)$")
-      -- Normalizar java 8
-      if major == "1" then
-        major = "8"
-      end
-      table.insert(result, {
-        name = name,
-        major = major,
-        path = path,
-        is_current = (path == current_link),
-      })
-    end
-  end
-  handle:close()
-
-  -- Ordenar por versión major
-  table.sort(result, function(a, b)
-    return tonumber(a.major or 0) < tonumber(b.major or 0)
-  end)
-
-  return result
+  return sdkman.list_javas()
 end
 
 -- ─── API pública ──────────────────────────────────────────────────────────────

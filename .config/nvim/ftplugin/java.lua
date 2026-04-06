@@ -1,34 +1,16 @@
 -- Al inicio de java.lua, reemplazá las líneas de home y sdkman
 local home = os.getenv("HOME")
 local jdtls = require("jdtls")
-local sdkman = os.getenv("SDKMAN_DIR")
-  or (vim.fn.isdirectory("/usr/local/sdkman") == 1 and "/usr/local/sdkman")
-  or (home .. "/.sdkman")
 -- Nombre del proyecto basado en el directorio actual
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
 local workspace_dir = home .. "/.cache/nvim/jdtls/" .. project_name
 
 -- Busca dinámicamente la version instalada de java dado un prefijo
--- Ejemplo: find_java_version("21") → "21.0.10-ms"
-local function find_java_version(major)
-  local candidates_dir = sdkman .. "/candidates/java"
-  local handle = io.popen("ls " .. candidates_dir .. " 2>/dev/null")
-  if not handle then
-    return nil
-  end
-  local result = handle:read("*a")
-  handle:close()
-  for version in result:gmatch("[^\n]+") do
-    if version:match("^" .. major .. "%.") and version ~= "current" then
-      return candidates_dir .. "/" .. version
-    end
-  end
-  return nil
-end
+local sdkman = require("custom.java_sdkman")
 
-local java21 = find_java_version("21") or sdkman .. "/candidates/java/current"
-local java17 = find_java_version("17")
-local java8 = find_java_version("8")
+local java21 = sdkman.java_home("21") or sdkman.candidates_dir() .. "/current"
+local java17 = sdkman.java_home("17")
+local java8 = sdkman.java_home("8")
 
 -- ============================================================
 -- BUNDLES CONFIGURATION (siguiendo documentación oficial)
@@ -90,21 +72,32 @@ local config = {
     java = {
       home = java21,
       configuration = {
-        runtimes = {
-          java8 and {
-            name = "JavaSE-1.8",
-            path = java8,
-          } or nil,
-          java17 and {
-            name = "JavaSE-17",
-            path = java17,
-          } or nil,
-          {
+        runtimes = (function()
+          local rt = {}
+
+          if java8 then
+            table.insert(rt, {
+              name = "JavaSE-1.8",
+              path = java8,
+            })
+          end
+
+          if java17 then
+            table.insert(rt, {
+              name = "JavaSE-17",
+              path = java17,
+            })
+          end
+
+          -- Java 21 siempre presente (fallback a current si no se encuentra)
+          table.insert(rt, {
             name = "JavaSE-21",
             path = java21,
             default = true,
-          },
-        },
+          })
+
+          return rt
+        end)(),
       },
       maven = {
         downloadSources = true,
