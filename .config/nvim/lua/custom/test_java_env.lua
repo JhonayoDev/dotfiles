@@ -11,7 +11,6 @@
 --   M.java_home_for(cwd) → string|nil  JAVA_HOME a usar para Maven
 
 local M = {}
-local sdkman = require("custom.java_sdkman")
 
 -- Importar java_runtime para mostrar el runtime activo sincronizado
 -- pcall para evitar error circular si java_runtime no está disponible aún
@@ -112,9 +111,9 @@ end
 local function read_maven_version()
   local java_home = os.getenv("JAVA_HOME")
 
-  -- Fallback: sdkman current symlink (ruta dinámica, no hardcodeada)
+  -- Fallback 1: sdkman current symlink
   if not java_home or java_home == "" then
-    local sdkman_current = sdkman.candidates_dir() .. "/current"
+    local sdkman_current = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java/current"
     local link = vim.fn.resolve(sdkman_current)
     if link ~= sdkman_current then
       java_home = link
@@ -123,17 +122,18 @@ local function read_maven_version()
 
   -- Intentar extraer versión del path
   if java_home and java_home ~= "" then
-    local version = java_home:match("/java/(%d+)%.") or java_home:match("/java/(%d+)$") or java_home:match("%-(%d+)%-")
+    local version = java_home:match("/java/(%d+)%.") or java_home:match("/java/(%d+)$") or java_home:match("%-(%d+)%-") -- ej: temurin-21-...
     if version then
       return version, java_home
     end
   end
 
-  -- Fallback: ejecutar java -version y parsear el output
+  -- Fallback 2: ejecutar java -version y parsear el output
   local handle = io.popen("java -version 2>&1")
   if handle then
     local output = handle:read("*a")
     handle:close()
+    -- 'java version "21.0.8"' o 'openjdk version "1.8.0_402"'
     local ver_str = output:match('"(%d+)[."]') or output:match('"1%.(%d+)')
     if ver_str then
       return ver_str, java_home or "PATH"
@@ -148,7 +148,40 @@ end
 ---Devuelve lista de JDKs instalados en sdkman.
 ---@return table[]  lista de { version="21", path="...", is_current=bool }
 local function list_sdkman_javas()
-  return sdkman.list_javas()
+  local sdkman_dir = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java"
+  local handle = io.popen("ls " .. sdkman_dir .. " 2>/dev/null")
+  if not handle then
+    return {}
+  end
+
+  local current_link = vim.fn.resolve(sdkman_dir .. "/current")
+  local result = {}
+
+  for line in handle:lines() do
+    local name = vim.trim(line)
+    if name ~= "" and name ~= "current" then
+      local path = sdkman_dir .. "/" .. name
+      local major = name:match("^(%d+)%.") or name:match("^(%d+)$")
+      -- Normalizar java 8
+      if major == "1" then
+        major = "8"
+      end
+      table.insert(result, {
+        name = name,
+        major = major,
+        path = path,
+        is_current = (path == current_link),
+      })
+    end
+  end
+  handle:close()
+
+  -- Ordenar por versión major
+  table.sort(result, function(a, b)
+    return tonumber(a.major or 0) < tonumber(b.major or 0)
+  end)
+
+  return result
 end
 
 -- ─── API pública ──────────────────────────────────────────────────────────────
@@ -238,122 +271,122 @@ function M.java_home_for(cwd)
   return nil
 end
 
----Muestra un float con el estado del entorno Java y una acción de ajuste.
+---Muestra un float con el estado del entorno Java del proyecto.
+---Usa el runtime sincronizado como fuente de verdad para Maven y Runner.
 function M.show_panel()
   local cwd = vim.fn.getcwd()
   local env = M.check(cwd)
+  local active = get_active_runtime()
+
+  -- ── Determinar estado real de Maven y Runner ───────────────────────────────
+  -- El runtime sincronizado es la fuente de verdad:
+  --   - Si active existe y su major == required → Maven y Runner están ok
+  --   - Si required está missing → falla real, no hay forma de corregirlo
+  --   - Si no hay active aún → usar env.compatible como fallback
+
+  local required = env.required
+
+  local maven_ok, runner_ok
+  if env.missing then
+    -- JDK requerido no instalado → falla real en ambos
+    maven_ok = false
+    runner_ok = false
+  elseif active then
+    -- Runtime sincronizado disponible → es la verdad
+    maven_ok = (active.major == required) or not required
+    runner_ok = maven_ok
+  else
+    -- Sin runtime aún → usar compatibilidad del sistema
+    maven_ok = env.compatible
+    runner_ok = env.compatible
+  end
 
   local lines = {}
   local function add(s)
     table.insert(lines, s or "")
   end
 
-  add("  Java Environment ")
+  -- ── Cabecera ───────────────────────────────────────────────────────────────
+  add("  Java Environment")
   add("  " .. string.rep("─", 44))
   add("")
 
-  -- Proyecto
+  -- ── Proyecto ──────────────────────────────────────────────────────────────
   add("  Proyecto : " .. vim.fn.fnamemodify(cwd, ":t"))
 
-  -- Versión requerida por el pom
+  -- ── jdtls: siempre Java 21 para el LSP, es correcto ───────────────────────
+  local jdtls_ver = env.jdtls or "21"
+  add("  jdtls    : Java " .. jdtls_ver .. "  (configuración del LSP)")
+
+  add("")
+
+  -- ── pom.xml ───────────────────────────────────────────────────────────────
   if not env.has_pom then
     add("  pom.xml  : no encontrado")
   elseif env.pom_unversioned then
     add("  pom.xml  : ⚠ sin versión Java declarada")
-    add("             Maven usará cualquier Java disponible")
-    add("             Comportamiento puede diferir en otros IDEs")
-    add("")
-    add("  Sugerencia: agregar en pom.xml:")
-    add("    <properties>")
-    add("      <maven.compiler.release>" .. (env.maven or "?") .. "</maven.compiler.release>")
-    add("    </properties>")
+    add("             Agrega en pom.xml:")
+    add("               <maven.compiler.release>" .. (env.maven or "?") .. "</maven.compiler.release>")
   else
-    add("  pom.xml  : Java " .. env.required .. "  (vía " .. env.required_src .. ")")
+    add("  pom.xml  : Java " .. required .. "  (vía " .. env.required_src .. ")")
   end
 
   add("")
 
-  -- Estado de Maven
-  local maven_icon = env.compatible and "✓" or "✗"
-  add("  Maven    : " .. maven_icon .. " Java " .. (env.maven or "desconocido"))
-  if env.maven_home then
-    add("             " .. env.maven_home)
-  end
-
-  -- Estado de jdtls
-  if env.jdtls then
-    local jdtls_icon = (env.jdtls == env.required or not env.required) and "✓" or "⚠"
-    add("  jdtls    : " .. jdtls_icon .. " Java " .. env.jdtls)
-    if env.jdtls ~= env.required and env.required then
-      add("             (distinto al requerido — normal si el LSP usa Java 21)")
-    end
+  -- ── Maven ─────────────────────────────────────────────────────────────────
+  if not required then
+    add("  Maven    : Java " .. (env.maven or "?") .. "  (sin versión declarada en pom.xml)")
+  elseif maven_ok then
+    add("  Maven    : ✓ Java " .. required)
   else
-    add("  jdtls    : no activo en este buffer")
+    add("  Maven    : ✗ Java " .. required .. " no instalado")
   end
 
-  -- Runtime activo sincronizado por java_runtime.lua
-  local active = get_active_runtime()
-  if active then
-    add("")
-    add("  " .. string.rep("─", 44))
-    add("  Runtime sincronizado (java_runtime):")
-    add("")
-    local a_icon = (active.major == env.required) and "✓" or "⚠"
-    add("  " .. a_icon .. " Java " .. active.major .. "  —  " .. active.name)
-    add("    jdtls  ✓  Maven  ✓  DAP  ✓")
-    if active.java_home and active.java_home ~= "" then
-      add("    " .. active.java_home)
-    end
+  -- ── Runner / LSP ──────────────────────────────────────────────────────────
+  if not required then
+    add("  Runner   : Java " .. (env.maven or "?"))
+  elseif runner_ok then
+    add("  Runner   : ✓ Java " .. required)
+  else
+    add("  Runner   : ✗ Java " .. required .. " no instalado")
   end
 
+  -- ── Mensaje de acción si hay falla ────────────────────────────────────────
+  if env.missing and required then
+    add("")
+    add("  ⚠ Java " .. required .. " requerido pero no instalado")
+    add("    En devpod agrega en devcontainer.json:")
+    add('      "additionalVersions": "' .. required .. '"')
+    add("    Luego: devpod delete && devpod up")
+    add("")
+    add("    En local:")
+    add("      sdk install java <versión>-tem")
+  end
+
+  -- ── JDKs disponibles ──────────────────────────────────────────────────────
   add("")
   add("  " .. string.rep("─", 44))
-  add("  JDKs disponibles en sdkman:")
+  add("  JDKs instalados:")
   add("")
 
   for _, jdk in ipairs(env.available) do
     local marker = jdk.is_current and "● " or "  "
-    local req_mark = (jdk.major == env.required) and " ← requerido" or ""
+    local req_mark = (jdk.major == required) and " ← proyecto" or ""
     add("  " .. marker .. jdk.name .. req_mark)
   end
 
-  -- Aviso si falta el JDK requerido
-  if env.missing and env.required then
-    add("")
-    add("  ✗ Java " .. env.required .. " no está instalado en sdkman")
-    add("    Para instalarlo:")
-    add("    sdk install java <versión>-tem")
-    add("    Versiones disponibles: sdk list java | grep ^" .. env.required)
-  end
-
-  add("")
-  add("  " .. string.rep("─", 44))
-
-  -- Resumen final
-  if not env.has_pom then
-    add("    Sin pom.xml — usando Java " .. (env.maven or "?") .. " del sistema")
-  elseif env.pom_unversioned then
-    add("  ⚠ pom.xml sin versión — declararla evita sorpresas")
-  elseif env.missing then
-    add("  ✗ Java " .. env.required .. " requerido pero no instalado")
-    add("    Los tests pueden fallar por incompatibilidad")
-  elseif env.compatible then
-    add("  ✓ Entorno compatible — Java " .. env.required)
-  else
-    add("  ⚠ Sistema: Java " .. (env.maven or "?") .. "  —  proyecto requiere Java " .. env.required)
-    add("  ✓ El runner ajustará JAVA_HOME a Java " .. env.required .. " automáticamente")
-    add("    (jdtls sigue usando Java " .. (env.jdtls or env.maven or "?") .. " para el LSP — es correcto)")
+  if #env.available == 0 then
+    add("  (ninguno encontrado)")
   end
 
   add("")
 
-  -- Crear float
+  -- ── Crear float ───────────────────────────────────────────────────────────
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
   vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
 
-  -- Ancho dinámico: el más largo de las líneas, acotado al 80% de columnas
   local max_line = 50
   for _, l in ipairs(lines) do
     if #l > max_line then
@@ -379,7 +412,7 @@ function M.show_panel()
   vim.api.nvim_set_option_value("wrap", true, { win = win })
   vim.api.nvim_set_option_value("cursorline", true, { win = win })
 
-  -- Highlights
+  -- ── Highlights ────────────────────────────────────────────────────────────
   local ns = vim.api.nvim_create_namespace("java_env_panel")
   for i, line in ipairs(lines) do
     local lnum = i - 1
@@ -389,8 +422,6 @@ function M.show_panel()
       vim.api.nvim_buf_add_highlight(buf, ns, "DiagnosticError", lnum, 0, -1)
     elseif line:match("^%s*⚠") then
       vim.api.nvim_buf_add_highlight(buf, ns, "DiagnosticWarn", lnum, 0, -1)
-    elseif line:match("^%s*ℹ") then
-      vim.api.nvim_buf_add_highlight(buf, ns, "DiagnosticInfo", lnum, 0, -1)
     elseif line:match("^%s*●") then
       vim.api.nvim_buf_add_highlight(buf, ns, "DiagnosticInfo", lnum, 0, -1)
     elseif line:match("←") then
