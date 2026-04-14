@@ -408,9 +408,9 @@ local function refresh_tree()
       "",
       "  " .. ICON.running .. " No hay resultados todavía.",
       "",
-      "  <leader>cTpc  →  clase actual",
-      "  <leader>cTpm  →  método bajo cursor",
-      "  <leader>cTpa  →  todos los tests",
+      "  <leader>cTc  →  clase actual",
+      "  <leader>cTm  →  método bajo cursor",
+      "  <leader>cTa  →  todos los tests",
       "",
     })
     return
