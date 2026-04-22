@@ -1,0 +1,81 @@
+/* Tema para control center y submenús - sin barra de búsqueda */
+
+* {
+    bg0:     #033C4B;
+    bg1:     #046F5F;
+    bg2:     #00361A;
+    accent:  #00DC6C;
+    fg0:     #56D9C7;
+    fg1:     #ffffff;
+    fg2:     #052A25;
+
+    font:               "IBM Plex Mono Medium 13";
+    background-color:   transparent;
+    text-color:         @fg0;
+    margin:             0;
+    padding:            0;
+    spacing:            0;
+}
+
+window {
+    location:           center;
+    width:              500px;
+    border-radius:      16px;
+    background-color:   @bg0;
+    border:             2px;
+    border-color:       @accent;
+}
+
+mainbox {
+    padding:            16px;
+    spacing:            8px;
+    children:           [ message, listview ];
+}
+
+/* Sin inputbar - no se necesita búsqueda */
+inputbar {
+    enabled:            false;
+}
+
+message {
+    border-radius:      10px;
+    background-color:   @bg1;
+    padding:            0;
+}
+
+textbox {
+    padding:            10px 14px;
+    text-color:         @fg0;
+    font:               "IBM Plex Mono Medium 12";
+}
+
+listview {
+    background-color:   transparent;
+    lines:              6;
+    columns:            1;
+    fixed-height:       false;
+    spacing:            4px;
+}
+
+element {
+    padding:            12px 14px;
+    spacing:            12px;
+    border-radius:      10px;
+    orientation:        horizontal;
+    children:           [ element-icon, element-text ];
+}
+
+element selected {
+    background-color:   @bg2;
+    text-color:         @accent;
+}
+
+element-icon {
+    size:               1.5em;
+    vertical-align:     0.5;
+}
+
+element-text {
+    text-color:         inherit;
+    vertical-align:     0.5;
+}

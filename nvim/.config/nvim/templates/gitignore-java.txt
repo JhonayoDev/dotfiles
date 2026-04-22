@@ -1,0 +1,111 @@
+##################################################
+# BUILD TOOLS
+##################################################
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+##################################################
+# COMPILED / GENERATED FILES
+##################################################
+# Compiled class files
+*.class
+
+# Logs
+*.log
+hs_err_pid*
+replay_pid*
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+##################################################
+# PACKAGE FILES
+##################################################
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+##################################################
+# ECLIPSE / JDTLS (Neovim)
+##################################################
+.project
+.classpath
+.settings/
+.factorypath
+.metadata/
+.externalToolBuilders/
+.loadpath
+.cproject
+.buildpath
+bin/
+.eclipse/
+.jdtls/
+
+##################################################
+# SPRING TOOL SUITE (STS)
+##################################################
+.apt_generated
+.springBeans
+.sts4-cache
+
+##################################################
+# INTELLIJ IDEA
+##################################################
+.idea/
+*.iml
+*.ipr
+*.iws
+
+##################################################
+# NETBEANS
+##################################################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+##################################################
+# VS CODE
+##################################################
+.vscode/
+
+##################################################
+# OS FILES
+##################################################
+.DS_Store
+Thumbs.db
+
+##################################################
+# APPLICATION SPECIFIC
+##################################################
+# Application temporary files
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+docker-compose.override.yml

@@ -42,3 +42,37 @@ mpd/log
 mpd/pid
 mpd/state
 mpd/sticker.sql
+
+__pycache__
+*.pyc
+*.pyo
+
+# Vim / Neovim
+*.swo
+*.swn
+Session.vim
+.netrwhist
+tags
+
+# Neovim cache (NO dotfiles)
+nvim-data/
+nvim/log/
+
+# runtime / cache de apps
+*.cache
+cache/
+tmp/
+
+# Qtile runtime
+qtile/__pycache__/
+qtile/*.pyc
+qtile/logs/
+
+# GTK runtime
+recently-used.xbel
+bookmarks
+
+# backups locales de configs
+*.original
+*.backup
+*.old
