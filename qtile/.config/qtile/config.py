@@ -23,7 +23,7 @@ from libqtile.lazy import lazy
 
 mod         = "mod4"       # Tecla Super (Windows)
 mod1        = "mod1"       # Tecla Alt
-terminal    = "alacritty"
+terminal    = "wezterm"
 filemanager = "thunar"
 
 
