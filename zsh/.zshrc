@@ -276,3 +276,4 @@ if [ -z "$SDKMAN_DIR" ]; then
     export SDKMAN_DIR="$HOME/.sdkman"
   fi
 fi
+export PATH="$HOME/.local/bin:$PATH"

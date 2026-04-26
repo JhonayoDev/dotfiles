@@ -20,11 +20,12 @@ import subprocess
 from libqtile import bar, layout, widget, hook, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen, KeyChord
 from libqtile.lazy import lazy
+from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER
 
 mod         = "mod4"       # Tecla Super (Windows)
 mod1        = "mod1"       # Tecla Alt
-terminal    = "wezterm"
-filemanager = "thunar"
+terminal    = TERMINAL
+filemanager = FILEMANAGER
 
 
 # ── 2. STICKY WINDOWS ───────────────────────────────────────
@@ -255,14 +256,14 @@ for i in groups:
 # Tile     → master izquierda + stack derecha (clásico dwm-style)
 
 layouts = [
-#    layout.MonadTall(margin=6, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3, ratio=0.6,),
-    layout.Tile(margin=6, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3,ratio =0.6, ),
-    layout.Columns(margin=6, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3),
-    layout.Max(margin=6, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=0),
-#    layout.Floating(margin=0, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3),
-#    layout.Matrix(margin=0, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3),
-#    layout.MonadWide(margin=0, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3),
-#    layout.Tile(margin=0, border_focus='#00DC6C', border_normal='#1F1D2E', border_width=3),
+#    layout.MonadTall(margin=6, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3, ratio=0.6,),
+    layout.Tile(margin=6, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3,ratio =0.6, ),
+    layout.Columns(margin=6, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
+    layout.Max(margin=6, border_focus=colors['accent'], border_normal=colors['dark'], border_width=0),
+#    layout.Floating(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
+#    layout.Matrix(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
+#    layout.MonadWide(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
+#    layout.Tile(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
 ]
 
 
@@ -274,7 +275,7 @@ layouts = [
 # IMPORTANTE: widget.Systray solo puede existir UNA vez en todo Qtile.
 # Por eso solo está en la barra principal.
 
-widget_defaults = dict(font='sans', fontsize=12, padding=4,)
+widget_defaults = dict(font=font['mono'], fontsize=font['size'], padding=4,)
 extension_defaults = widget_defaults.copy()
 def open_launcher():
     qtile.spawn("rofi -theme rounded-green-dark -show drun")
@@ -287,11 +288,11 @@ def make_bar_primary():
             [
                 widget.Spacer(
                     length=18, 
-                    background='#033C4B',
+                    background=colors['bg0'],
                     ),
                 widget.Image(
                     filename='~/.config/qtile/Assets/launch_Icon.png',
-                    background='#033C4B', 
+                    background=colors['bg0'], 
                     mouse_callbacks = {'Button1': open_launcher},
                     ),
                 widget.Image(
@@ -300,33 +301,33 @@ def make_bar_primary():
 
         # Muestra solo los grupos del monitor principal (1-4)
         widget.GroupBox(
-            fontsize=16, borderwidth=0, highlight_method='block',
-            active='#56D9C7', block_highlight_text_color="#00F076",
-            highlight_color='#4B427E', inactive='#052A25',
-            foreground='#046F5F', background='#046F5F',
-            this_current_screen_border='#00361A', this_screen_border='#52548D',
-            other_current_screen_border='#52548D', other_screen_border='#52548D',
-            urgent_border='#52548D', rounded=True, disable_drag=True,
+            fontsize=font['size'], borderwidth=0, highlight_method='block',
+            active=colors['fg0'], block_highlight_text_color="#00F076",
+            highlight_color=colors['purple'], inactive=colors['fg2'],
+            foreground=colors['bg1'], background=colors['bg1'],
+            this_current_screen_border=colors['bg2'], this_screen_border=colors['purple'],
+            other_current_screen_border=colors['purple'], other_screen_border=colors['purple'],
+            urgent_border=colors['purple'], rounded=True, disable_drag=True,
             visible_groups=GROUPS_PRIMARY,
         ),
 
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
         widget.Image(filename='~/.config/qtile/Assets/2.png'),
-        widget.CurrentLayout(background='#046F5F', font='IBM Plex Mono Medium', fontsize=15, padding=0),
+        widget.CurrentLayout(background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
         widget.Image(filename='~/.config/qtile/Assets/2.png'),
-        widget.WindowName(background='#046F5F', format="{name}", font='IBM Plex Mono Medium',
-                          fontsize=14, empty_group_string='Desktop', padding=0),
+        widget.WindowName(background=colors['bg1'], format="{name}", font=font['mono'],
+                          fontsize=font['size'], empty_group_string='Desktop', padding=0),
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
-        widget.Image(filename='~/.config/qtile/Assets/1.png', background='#52548D'),
+        widget.Image(filename='~/.config/qtile/Assets/1.png', background=colors['purple']),
 
 	    # Widget de Idioma Input
         widget.TextBox(
                 text="󰌌",
-                font="MesloLGS Nerd Font Mono",
-                fontsize=18,
-                background='#046F5F',
-                foreground='#56D9C7',
+                font=font['icons'],
+                fontsize=font['isize'],
+                background=colors['bg1'],
+                foreground=colors['fg0'],
                 padding=4,
                 mouse_callbacks={'Button1': lambda: qtile.spawn("alacritty --hold -e btop")},
         ),
@@ -334,146 +335,146 @@ def make_bar_primary():
 	            func=lambda: open('/tmp/kb_layout').read().strip()
 	                         if os.path.exists('/tmp/kb_layout') else 'US',
 	            update_interval=2,
-	            font='IBM Plex Mono Medium',
-	            fontsize=15,
-	            background='#046F5F',
+	            font=font['mono'],
+	            fontsize=font['size'],
+	            background=colors['bg1'],
 	            padding=4,
 	    ),
 	    widget.Image(filename='~/.config/qtile/Assets/5.png'),
-        widget.Image(filename='~/.config/qtile/Assets/1.png', background='#4B427E'),
+        widget.Image(filename='~/.config/qtile/Assets/1.png', background=colors['purple']),
 
 
         #Widget de CPU
         widget.TextBox(
             text="󰍹",
-            font="MesloLGS Nerd Font Mono",
-            fontsize=18,
-            background='#046F5F',
-            foreground='#56D9C7',
+            font=font['icons'],
+            fontsize=font['isize'],
+            background=colors['bg1'],
+            foreground=colors['fg0'],
             padding=6,
             mouse_callbacks={'Button1': open_btop},
         ),
-        widget.Spacer(length=4, background='#046f5f'),
+        widget.Spacer(length=4, background=colors['bg1']),
         widget.CPU(
-            font = "IBM Plex Mono Medium",
+            font = font['mono'],
             format='CPU {load_percent:4.1f}%',
-            fontsize = 15,
+            fontsize=font['size'],
             margin = 0,
             padding = 0,
-            background = '#046F5F',
+            background = colors['bg1'],
             mouse_callbacks = {'Button1': open_btop},
         ),
-        widget.Spacer(length=6, background='#046f5f'),
+        widget.Spacer(length=6, background=colors['bg1']),
         #Widget de RAM
         widget.TextBox(
             text="󰍛",
-            font="MesloLGS Nerd Font Mono",
-            fontsize=18,
-            background='#046F5F',
-            foreground='#56D9C7',
+            font=font['icons'],
+            fontsize=font['isize'],
+            background=colors['bg1'],
+            foreground=colors['fg0'],
             padding=6,
             mouse_callbacks={'Button1': lambda: qtile.spawn("alacritty --hold -e btop")},
         ),
-        widget.Spacer(length=4, background='#046f5f'),
+        widget.Spacer(length=4, background=colors['bg1']),
         widget.Memory(
                 format='{MemUsed:4.1f}/{MemTotal:4.1f} GB´',
                 measure_mem='G',
-                font='IBM Plex Mono Medium',
-                fontsize=15,
+                font=font['mono'],
+                fontsize=font['size'],
                 padding=0,
-                background='#046F5F',
+                background=colors['bg1'],
                 mouse_callbacks={'Button2': lambda: qtile.spawn("alacritty --hold -e btop")},
         ),
-        widget.Spacer(length=6, background='#046f5f'),
+        widget.Spacer(length=6, background=colors['bg1']),
         #Widget de temperatura
         widget.TextBox(
             text="󰔏",
-            font="MesloLGS Nerd Font Mono",
-            fontsize=18,
-            background='#046F5F',
-            foreground='#56D9C7',
+            font=font['icons'],
+            fontsize=font['isize'],
+            background=colors['bg1'],
+            foreground=colors['fg0'],
             padding=6,
         ),
-        widget.Spacer(length=4, background='#046f5f'),
+        widget.Spacer(length=4, background=colors['bg1']),
         widget.ThermalSensor(
-            font='IBM Plex Mono Medium',
-            fontsize=15,
+            font=font['mono'],
+            fontsize=font['size'],
             padding=0,
-            background='#046F5F',
-            foreground='#56D9C7',
-            foreground_alert='#FF5555',  # rojo cuando está caliente
+            background=colors['bg1'],
+            foreground=colors['fg0'],
+            foreground_alert=colors['alert'],  # rojo cuando está caliente
             threshold=80,                 # alerta a partir de 80°C
             tag_sensor="Package id 0",   # sensor principal del Mac
         ),
-        widget.Spacer(length=6, background='#046f5f'),
+        widget.Spacer(length=6, background=colors['bg1']),
 
         # Systray: íconos del sistema. Solo puede haber uno en toda la config.
-        widget.Systray(background='#046F5F', icon_size=24, padding=4),
+        widget.Systray(background=colors['bg1'], icon_size=24, padding=4),
  
 	    # Seccion del volumen 
-      	widget.Spacer(length=6, background='#046f5f'),
+      	widget.Spacer(length=6, background=colors['bg1']),
 
         #Falta el icono de volumen
 
-        widget.Spacer(length=6, background='#046f5f'),
-        widget.PulseVolume(font='IBM Plex Mono Medium', fontsize=15, padding=0, background='#046F5F'),
+        widget.Spacer(length=6, background=colors['bg1']),
+        widget.PulseVolume(font=font['mono'], fontsize=font['size'], padding=0, background=colors['bg1']),
 
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
-        widget.Image(filename='~/.config/qtile/Assets/2.png', background='#52548D'),
-        widget.Spacer(length=0, background='#046f5f'),
+        widget.Image(filename='~/.config/qtile/Assets/2.png', background=colors['purple']),
+        widget.Spacer(length=0, background=colors['bg1']),
 
         widget.Image(filename='~/.config/qtile/Assets/Bar-Icons/calendar.svg',
-                     background='#046F5F', margin_y=3, scale=True),
-        widget.Spacer(length=6, background='#046f5f'),
-        widget.Clock(format='%d/%m/%y ', background='#046f5f', font='IBM Plex Mono Medium', fontsize=15, padding=0),
+                     background=colors['bg1'], margin_y=3, scale=True),
+        widget.Spacer(length=6, background=colors['bg1']),
+        widget.Clock(format='%d/%m/%y ', background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
         widget.Image(filename='~/.config/qtile/Assets/Bar-Icons/clock.svg',
-                     background='#046F5F', margin_y=3, margin_x=5, scale=True),
-        widget.Clock(format='%H:%M', background='#046f5f', font='IBM Plex Mono Medium', fontsize=15, padding=0),
-        widget.Spacer(length=18, background='#046f5f'),
+                     background=colors['bg1'], margin_y=3, margin_x=5, scale=True),
+        widget.Clock(format='%H:%M', background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
+        widget.Spacer(length=18, background=colors['bg1']),
     ], 30, margin=[0, 8, 6, 8])
 
 
 def make_bar_secondary():
     return bar.Bar([
-        widget.Spacer(length=18, background='#033C4B'),
+        widget.Spacer(length=18, background=colors['bg0']),
 
         # Muestra solo los grupos del monitor secundario (5-8)
         widget.GroupBox(
-            fontsize=16, borderwidth=0, highlight_method='block',
-            active='#56D9C7', block_highlight_text_color="#00F076",
-            highlight_color='#4B427E', inactive='#052A25',
-            foreground='#046F5F', background='#046F5F',
-            this_current_screen_border='#00361A', this_screen_border='#52548D',
-            other_current_screen_border='#52548D', other_screen_border='#52548D',
+            fontsize=font['size'], borderwidth=0, highlight_method='block',
+            active=colors['fg0'], block_highlight_text_color="#00F076",
+            highlight_color=colors['purple'], inactive=colors['fg2'],
+            foreground=colors['bg1'], background=colors['bg1'],
+            this_current_screen_border=colors['bg2'], this_screen_border=colors['purple'],
+            other_current_screen_border=colors['purple'], other_screen_border=colors['purple'],
             rounded=True, disable_drag=True,
             visible_groups=GROUPS_SECONDARY,
         ),
 
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
         widget.Image(filename='~/.config/qtile/Assets/2.png'),
-        widget.CurrentLayout(background='#046F5F', font='IBM Plex Mono Medium', fontsize=15, padding=0),
+        widget.CurrentLayout(background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
         widget.Image(filename='~/.config/qtile/Assets/2.png'),
-#        widget.WindowName(background='#046F5F', font='IBM Plex Mono Medium',
-#                          fontsize=14, empty_group_string='Desktop', padding=0),
-        widget.Spacer(background='#046F5F'),
-        widget.Image(filename='~/.config/qtile/Assets/1.png', background='#52548D'),
+#        widget.WindowName(background=colors['bg1'], font=font['mono'],
+#                          fontsize=font['size'], empty_group_string='Desktop', padding=0),
+        widget.Spacer(background=colors['bg1']),
+        widget.Image(filename='~/.config/qtile/Assets/1.png', background=colors['purple']),
 
-        widget.CPU(font='IBM Plex Mono Medium', format='CPU:({load_percent:.1f}%)',
-                   fontsize=15, padding=0, background='#046F5F',
+        widget.CPU(font=font['mono'], format='CPU:({load_percent:.1f}%)',
+                   fontsize=font['size'], padding=0, background=colors['bg1'],
                    mouse_callbacks={'Button1': open_btop}),
 
         widget.Image(filename='~/.config/qtile/Assets/5.png'),
-        widget.Image(filename='~/.config/qtile/Assets/1.png', background='#4B427E'),
+        widget.Image(filename='~/.config/qtile/Assets/1.png', background=colors['purple']),
 
         widget.Image(filename='~/.config/qtile/Assets/Bar-Icons/calendar.svg',
-                     background='#046F5F', margin_y=3, scale=True),
-        widget.Spacer(length=6, background='#046f5f'),
-        widget.Clock(format='%d/%m/%y ', background='#046f5f', font='IBM Plex Mono Medium', fontsize=15, padding=0),
+                     background=colors['bg1'], margin_y=3, scale=True),
+        widget.Spacer(length=6, background=colors['bg1']),
+        widget.Clock(format='%d/%m/%y ', background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
         widget.Image(filename='~/.config/qtile/Assets/Bar-Icons/clock.svg',
-                     background='#046F5F', margin_y=3, margin_x=5, scale=True),
-        widget.Clock(format='%H:%M', background='#046f5f', font='IBM Plex Mono Medium', fontsize=15, padding=0),
-        widget.Spacer(length=18, background='#046f5f'),
+                     background=colors['bg1'], margin_y=3, margin_x=5, scale=True),
+        widget.Clock(format='%H:%M', background=colors['bg1'], font=font['mono'], fontsize=font['size'], padding=0),
+        widget.Spacer(length=18, background=colors['bg1']),
     ], 30, margin=[0, 8, 6, 8])
 
 
@@ -501,8 +502,8 @@ screens = [
 # ── 9. CONFIGURACIÓN GENERAL ─────────────────────────────────
 
 floating_layout = layout.Floating(
-    border_focus='#00DC6C',
-    border_normal='#1F1D2E',
+    border_focus=colors['accent'],
+    border_normal=colors['dark'],
     border_width=3,
     float_rules=[
         *layout.Floating.default_float_rules,
