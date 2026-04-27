@@ -18,6 +18,11 @@ else
   xrandr --output $INTERNAL --mode 1920x1200 --primary
 fi
 
+# Tema oscuro GTK3 y GTK4
+export GTK_THEME=Adwaita-dark
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+
 picom --daemon &
 /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &
 eval $(gnome-keyring-daemon --start)
@@ -29,4 +34,5 @@ dbus-update-activation-environment --systemd DISPLAY XAUTHORITY
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 export GTK_THEME=Adwaita-dark
+xsettingsd &
 dunst &
