@@ -21,6 +21,8 @@ from libqtile import bar, layout, widget, hook, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen, KeyChord
 from libqtile.lazy import lazy
 from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER, apps
+from utils import notify
+from keys import make_keys
 
 mod = "mod4"  # Tecla Super (Windows)
 mod1 = "mod1"  # Tecla Alt
@@ -151,146 +153,9 @@ GROUPS_SECONDARY = ["5", "6", "7", "8"]
 
 # ── 5. KEYBINDS ─────────────────────────────────────────────
 
-
-keys = [
-    # ── Trackpad  ──────────────────
-    Key(
-        [],
-        "XF86LaunchB",
-        lazy.spawn("/home/jhonayo/.config/qtile/scripts/trackpad_toggle.sh"),
-        desc="Toggle trackpad",
-    ),
-    # ── Rofi  ──────────────────
-    #    Key([mod], "space", lazy.spawn('/home/jhonayo/.config/rofi/scripts/control_center.sh'), desc="Control Center"),
-    Key(
-        [mod],
-        "space",
-        lazy.spawn(
-            "rofi -show drun -theme /home/jhonayo/.config/rofi/themes/control-center.rasi"
-        ),
-        desc="Launcher",
-    ),
-    Key(
-        [mod1],
-        "space",
-        lazy.spawn("/home/jhonayo/.config/rofi/scripts/control_center.sh"),
-        desc="Control Center",
-    ),
-    # ── Navegación entre ventanas ──────────────────────────
-    Key([mod], "h", lazy.layout.left(), desc="Foco izquierda"),
-    Key([mod], "l", lazy.layout.right(), desc="Foco derecha"),
-    Key([mod], "j", lazy.layout.down(), desc="Foco abajo"),
-    Key([mod], "k", lazy.layout.up(), desc="Foco arriba"),
-    #    Key([mod], "space", lazy.layout.next(),  desc="Siguiente ventana"),
-    # ── Mover ventanas dentro del layout ──────────────────
-    Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Mover izquierda"),
-    Key([mod, "shift"], "l", lazy.layout.shuffle_right(), desc="Mover derecha"),
-    Key([mod, "shift"], "j", lazy.layout.shuffle_down(), desc="Mover abajo"),
-    Key([mod, "shift"], "k", lazy.layout.shuffle_up(), desc="Mover arriba"),
-    # ── Redimensionar ventanas ─────────────────────────────
-    Key([mod, "control"], "Left", lazy.layout.grow_left(), desc="Agrandar izquierda"),
-    Key([mod, "control"], "Right", lazy.layout.grow_right(), desc="Agrandar derecha"),
-    Key([mod, "control"], "Down", lazy.layout.grow_down(), desc="Agrandar abajo"),
-    Key([mod, "control"], "Up", lazy.layout.grow_up(), desc="Agrandar arriba"),
-    Key([mod], "n", lazy.layout.normalize(), desc="Normalizar tamaños"),
-    # Funcional para ajustar ancho en Title
-    Key([mod, "shift"], "Right", lazy.layout.increase_ratio(), desc="Agrandar master"),
-    Key([mod, "shift"], "Left", lazy.layout.decrease_ratio(), desc="Achicar master"),
-    # ── Ventanas ───────────────────────────────────────────
-    Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Pantalla completa"),
-    Key([mod], "v", lazy.window.toggle_floating(), desc="Toggle flotante"),
-    Key([mod], "q", lazy.window.kill(), desc="Cerrar ventana"),
-    #    Key([mod, "shift"], "Return", lazy.layout.toggle_split(), desc="Toggle split"),
-    Key([mod], "s", toggle_sticky_windows(), desc="Toggle sticky"),
-    # Desactivado por no usar ese modo de ventanas
-    #    Key([mod, "shift"], "Return", lazy.layout.swap_main(), desc="Promover ventana al master"),
-    # ── Sistema ────────────────────────────────────────────
-    Key([mod], "Return", lazy.spawn(terminal), desc="Terminal"),
-    Key([mod], "Tab", lazy.next_layout(), desc="Cambiar layout"),
-    Key([mod, "control"], "r", lazy.reload_config(), desc="Recargar config"),
-    Key([mod, "control"], "q", lazy.shutdown(), desc="Salir de Qtile"),
-    #    Key([mod1], "Space",       lazy.spawn("rofi -theme rounded-green-dark -show drun"), desc="Launcher"),
-    Key([mod], "e", lazy.spawn(filemanager), desc="Gestor de archivos"),
-    Key(
-        [mod],
-        "m",
-        lazy.spawn("/home/jhonayo/.config/qtile/scripts/kb_toggle.sh"),
-        desc="Cambiar layout teclado",
-    ),
-    # ── Monitores ──────────────────────────────────────────
-    # Super + .      → mover FOCO al siguiente monitor
-    # Super + ,      → mover FOCO al monitor anterior
-    # Super+Shift+.  → mover VENTANA al siguiente monitor
-    # Super+Shift+,  → mover VENTANA al monitor anterior
-    Key([mod], "period", lazy.next_screen(), desc="Foco siguiente monitor"),
-    Key([mod], "comma", lazy.prev_screen(), desc="Foco monitor anterior"),
-    #   Key([mod, "shift"], "period", lazy.window.to_next_screen(),    desc="Ventana al siguiente monitor"),
-    #    Key([mod, "shift"], "comma",  lazy.window.to_prev_screen(),    desc="Ventana al monitor anterior"),
-    Key(
-        [mod, "shift"],
-        "period",
-        window_to_next_screen,
-        desc="Ventana al siguiente monitor",
-    ),
-    Key(
-        [mod, "shift"],
-        "comma",
-        window_to_prev_screen,
-        desc="Ventana al monitor anterior",
-    ),
-    # ── Media ──────────────────────────────────────────────
-    Key(
-        [],
-        "XF86AudioRaiseVolume",
-        lazy.spawn("pactl set-sink-volume 0 +1%"),
-        desc="Volumen +",
-    ),
-    Key(
-        [],
-        "XF86AudioLowerVolume",
-        lazy.spawn("pactl set-sink-volume 0 -1%"),
-        desc="Volumen -",
-    ),
-    Key(
-        [],
-        "XF86AudioMute",
-        lazy.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle"),
-        desc="Mute",
-    ),
-    Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
-    Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Anterior"),
-    Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="Siguiente"),
-    # Key([], "XF86MonBrightnessUp", lazy.spawn("brightnessctl s 10%+"), desc="Brillo +"),
-    # Key([], "XF86MonBrightnessDown", lazy.spawn("brightnessctl s 10%-"), desc="Brillo -"),
-    # Key([], "F2", lazy.spawn("brightnessctl s 10%+"), desc="Brillo +"),
-    # Key([], "F1", lazy.spawn("brightnessctl s 10%-"), desc="Brillo -"),
-    Key(
-        [],
-        "F2",
-        lazy.spawn(
-            'bash -c \'brightnessctl s 10%+ && notify-send -t 1500 "Brillo" "$(brightnessctl g | awk "{print int(\\$1/1953*100)}")%"\''
-        ),
-        desc="Brillo +",
-    ),
-    Key(
-        [],
-        "F1",
-        lazy.spawn(
-            'bash -c \'brightnessctl s 10%- && notify-send -t 1500 "Brillo" "$(brightnessctl g | awk "{print int(\\$1/1953*100)}")%"\''
-        ),
-        desc="Brillo -",
-    ),
-    # ── Screenshots ────────────────────────────────────────
-    #    Key([],          "Print", lazy.spawn("flameshot gui"),                    desc="Screenshot región"),
-    #    Key(["control"], "Print", lazy.spawn("flameshot full -c -p ~/Pictures/"), desc="Screenshot completo"),
-    Key([mod], "p", lazy.spawn("flameshot gui"), desc="Screenshot región"),
-    Key(
-        [mod, "shift"],
-        "p",
-        lazy.spawn("flameshot full -c -p /home/jhonayo/Pictures/"),
-        desc="Screenshot completo",
-    ),
-]
+keys = make_keys(
+    toggle_sticky_windows(), window_to_next_screen, window_to_prev_screen, groups
+)
 
 # Keybinds para cada grupo
 # Super + 1-8        → ir al grupo N
