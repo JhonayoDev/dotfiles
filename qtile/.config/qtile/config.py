@@ -20,7 +20,7 @@ import subprocess
 from libqtile import bar, layout, widget, hook, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen, KeyChord
 from libqtile.lazy import lazy
-from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER
+from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER, apps
 
 mod = "mod4"  # Tecla Super (Windows)
 mod1 = "mod1"  # Tecla Alt
@@ -372,7 +372,7 @@ def open_launcher():
 
 
 def open_btop():
-    qtile.spawn("alacritty --hold -e btop")
+    qtile.spawn("terminal --hold -e btop")
 
 
 def make_bar_primary():
@@ -440,9 +440,7 @@ def make_bar_primary():
                 background=colors["bg1"],
                 foreground=colors["fg0"],
                 padding=4,
-                mouse_callbacks={
-                    "Button1": lambda: qtile.spawn("alacritty --hold -e btop")
-                },
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.GenPollText(
                 func=lambda: (
@@ -468,7 +466,7 @@ def make_bar_primary():
                 background=colors["bg1"],
                 foreground=colors["fg0"],
                 padding=6,
-                mouse_callbacks={"Button1": open_btop},
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=4, background=colors["bg1"]),
             widget.CPU(
@@ -478,7 +476,7 @@ def make_bar_primary():
                 margin=0,
                 padding=0,
                 background=colors["bg1"],
-                mouse_callbacks={"Button1": open_btop},
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=6, background=colors["bg1"]),
             # Widget de RAM
@@ -489,9 +487,7 @@ def make_bar_primary():
                 background=colors["bg1"],
                 foreground=colors["fg0"],
                 padding=6,
-                mouse_callbacks={
-                    "Button1": lambda: qtile.spawn("alacritty --hold -e btop")
-                },
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=4, background=colors["bg1"]),
             widget.Memory(
@@ -501,9 +497,7 @@ def make_bar_primary():
                 fontsize=font["size"],
                 padding=0,
                 background=colors["bg1"],
-                mouse_callbacks={
-                    "Button2": lambda: qtile.spawn("alacritty --hold -e btop")
-                },
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=6, background=colors["bg1"]),
             # Widget de temperatura
@@ -514,6 +508,7 @@ def make_bar_primary():
                 background=colors["bg1"],
                 foreground=colors["fg0"],
                 padding=6,
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=4, background=colors["bg1"]),
             widget.ThermalSensor(
@@ -525,6 +520,7 @@ def make_bar_primary():
                 foreground_alert=colors["alert"],  # rojo cuando está caliente
                 threshold=80,  # alerta a partir de 80°C
                 tag_sensor="Package id 0",  # sensor principal del Mac
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=6, background=colors["bg1"]),
             # Systray: íconos del sistema. Solo puede haber uno en toda la config.

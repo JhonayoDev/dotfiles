@@ -25,3 +25,7 @@ font = {
 
 terminal    = "gnome-terminal"
 filemanager = "nautilus"
+
+apps = {
+    "monitor": "gnome-terminal -- btop",
+}
