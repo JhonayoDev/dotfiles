@@ -485,14 +485,14 @@ def make_bar_secondary():
             widget.Image(
                 filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
             ),
-            widget.CPU(
-                font=font["mono"],
-                format="CPU:({load_percent:.1f}%)",
-                fontsize=font["size"],
-                padding=0,
-                background=colors["bg1"],
-                mouse_callbacks={"Button1": open_btop},
-            ),
+            #           widget.CPU(
+            #               font=font["mono"],
+            #               format="CPU:({load_percent:.1f}%)",
+            #               fontsize=font["size"],
+            #               padding=0,
+            #               background=colors["bg1"],
+            #               mouse_callbacks={"Button1": open_btop},
+            #           ),
             widget.Image(filename="~/.config/qtile/Assets/5.png"),
             widget.Image(
                 filename="~/.config/qtile/Assets/1.png", background=colors["purple"]

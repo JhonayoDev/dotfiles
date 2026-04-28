@@ -35,4 +35,7 @@ gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 export GTK_THEME=Adwaita-dark
 xsettingsd &
+# Mouse buttons
+pkill -f mouse-buttons.py 2>/dev/null
+python3 "/home/jhonayo/dotfiles/scripts/mouse-buttons.py" &
 dunst &
