@@ -119,6 +119,7 @@ def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, group
             lazy.spawn(
                 'bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''
             ),
+            lazy.widget["volume"].eval("self.force_update()"),
             desc="Mute",
         ),
         Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),

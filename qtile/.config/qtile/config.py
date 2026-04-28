@@ -397,8 +397,9 @@ def make_bar_primary():
             # Sección del volumen
             widget.Spacer(length=6, background=colors["bg1"]),
             widget.GenPollText(
+                name="volume",
                 func=get_volume_widget_text,
-                update_interval=2,
+                update_interval=0.5,
                 font=font["icons"],
                 fontsize=font["size"],
                 background=colors["bg1"],
