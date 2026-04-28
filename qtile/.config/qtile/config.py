@@ -298,32 +298,6 @@ def make_bar_primary():
             widget.Image(
                 filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
             ),
-            # Widget de Idioma Input
-            widget.TextBox(
-                text="󰌌",
-                font=font["icons"],
-                fontsize=font["isize"],
-                background=colors["bg1"],
-                foreground=colors["fg0"],
-                padding=4,
-                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
-            ),
-            widget.GenPollText(
-                func=lambda: (
-                    open("/tmp/kb_layout").read().strip()
-                    if os.path.exists("/tmp/kb_layout")
-                    else "US"
-                ),
-                update_interval=2,
-                font=font["mono"],
-                fontsize=font["size"],
-                background=colors["bg1"],
-                padding=4,
-            ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(
-                filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
-            ),
             # Widget de CPU
             widget.TextBox(
                 text="󰍹",
@@ -357,7 +331,7 @@ def make_bar_primary():
             ),
             widget.Spacer(length=4, background=colors["bg1"]),
             widget.Memory(
-                format="{MemUsed:4.1f}/{MemTotal:4.1f} GB´",
+                format="{MemUsed:4.1f} GB",
                 measure_mem="G",
                 font=font["mono"],
                 fontsize=font["size"],
@@ -391,9 +365,6 @@ def make_bar_primary():
             widget.Spacer(length=6, background=colors["bg1"]),
             # Systray: íconos del sistema. Solo puede haber uno en toda la config.
             widget.Systray(background=colors["bg1"], icon_size=24, padding=4),
-            # Seccion del volumen
-            widget.Spacer(length=6, background=colors["bg1"]),
-            # Falta el icono de volumen
             # Sección del volumen
             widget.Spacer(length=6, background=colors["bg1"]),
             widget.GenPollText(
@@ -406,11 +377,32 @@ def make_bar_primary():
                 foreground=colors["fg0"],
                 padding=6,
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(
-                filename="~/.config/qtile/Assets/2.png", background=colors["purple"]
+            widget.Spacer(length=6, background=colors["bg1"]),
+            # Widget de Idioma Input
+            widget.TextBox(
+                text="󰌌",
+                font=font["icons"],
+                fontsize=font["isize"],
+                background=colors["bg1"],
+                foreground=colors["fg0"],
+                padding=4,
+                mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=0, background=colors["bg1"]),
+            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.GenPollText(
+                func=lambda: (
+                    open("/tmp/kb_layout").read().strip()
+                    if os.path.exists("/tmp/kb_layout")
+                    else "US"
+                ),
+                update_interval=2,
+                font=font["mono"],
+                fontsize=font["size"],
+                background=colors["bg1"],
+                padding=4,
+            ),
+            # Widget de Calendario
+            widget.Spacer(length=4, background=colors["bg1"]),
             widget.Image(
                 filename="~/.config/qtile/Assets/Bar-Icons/calendar.svg",
                 background=colors["bg1"],

@@ -70,7 +70,7 @@ def get_volume_widget_text():
     if is_bluetooth_sink():
         device_icon = "󰋋"
     elif is_headphone_connected():
-        device_icon = "󰙈"
+        device_icon = "󱡒"
     else:
         device_icon = "󰓃"
 

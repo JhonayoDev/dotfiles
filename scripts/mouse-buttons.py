@@ -7,6 +7,7 @@ Modos:
   Audio (default): BTN_EXTRA=vol+, BTN_SIDE=vol-, BTN_FORWARD=toggle modo
   Navegación:      BTN_EXTRA=forward, BTN_SIDE=back, BTN_FORWARD=toggle modo
 """
+
 import subprocess
 import sys
 import time
@@ -37,8 +38,7 @@ def notify(title, body):
 def get_xinput_id(name):
     try:
         out = subprocess.run(
-            ["xinput", "list", "--id-only", name],
-            capture_output=True, text=True
+            ["xinput", "list", "--id-only", name], capture_output=True, text=True
         ).stdout.strip()
         return out if out else None
     except Exception:
@@ -61,7 +61,17 @@ def get_volume():
 
 def force_widget_update():
     subprocess.Popen(
-        ["qtile", "cmd-obj", "-o", "widget", "volume", "-f", "eval", "-a", "self.force_update()"],
+        [
+            "qtile",
+            "cmd-obj",
+            "-o",
+            "widget",
+            "volume",
+            "-f",
+            "eval",
+            "-a",
+            "self.force_update()",
+        ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -70,17 +80,65 @@ def force_widget_update():
 def set_audio_mode():
     device_id = get_xinput_id(DEVICE_NAME)
     if device_id:
-        run(["xinput", "set-button-map", device_id,
-             "1", "2", "3", "4", "5", "6", "7", "0", "0",
-             "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"])
+        run(
+            [
+                "xinput",
+                "set-button-map",
+                device_id,
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "0",
+                "0",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "19",
+                "20",
+            ]
+        )
 
 
 def set_nav_mode():
     device_id = get_xinput_id(DEVICE_NAME)
     if device_id:
-        run(["xinput", "set-button-map", device_id,
-             "1", "2", "3", "4", "5", "6", "7", "8", "9",
-             "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"])
+        run(
+            [
+                "xinput",
+                "set-button-map",
+                device_id,
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "19",
+                "20",
+            ]
+        )
 
 
 def volume_up():
@@ -104,17 +162,17 @@ def toggle_mode():
     if mode == "audio":
         mode = "nav"
         set_nav_mode()
-        notify("󰍺 Mouse", "Modo navegación")
+        notify("󰍺  Mouse", "Modo navegación")
     else:
         mode = "audio"
         set_audio_mode()
-        notify("󰕾 Mouse", "Modo audio")
+        notify("󰕾  Mouse", "Modo audio")
 
 
 ACTIONS = {
     "audio": {
-        ecodes.BTN_EXTRA:   volume_up,
-        ecodes.BTN_SIDE:    volume_down,
+        ecodes.BTN_EXTRA: volume_up,
+        ecodes.BTN_SIDE: volume_down,
         ecodes.BTN_FORWARD: toggle_mode,
     },
     "nav": {
