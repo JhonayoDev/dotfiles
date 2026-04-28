@@ -1,19 +1,17 @@
 #!/bin/bash
 # Selector de salida de audio
-# Muestra los dispositivos disponibles y permite cambiar el activo
-
 THEME="$HOME/.config/rofi/themes/submenu.rasi"
 
-# Obtener sink activo
-current=$(pactl info | grep "Default Sink" | awk '{print $3}')
+# Obtener sink activo (Ubuntu/PipeWire en español)
+current=$(pactl info | grep "Destino por defecto" | awk '{print $NF}')
 
-# Construir lista: descripción visible | id real
+# Construir lista
 menu=""
 while read -r line; do
-    if [[ $line == Name:* ]]; then
+    if [[ $line == *"Nombre:"* ]]; then
         id=$(echo "$line" | awk '{print $2}')
     fi
-    if [[ $line == Description:* ]]; then
+    if [[ $line == *"Descripción:"* ]]; then
         desc=$(echo "$line" | cut -d':' -f2- | sed 's/^ //')
         if [ "$id" = "$current" ]; then
             menu="${menu}✔ $desc|$id\n"
@@ -28,7 +26,6 @@ done < <(pactl list sinks)
 chosen=$(echo -e "$menu" | cut -d'|' -f1 | rofi -dmenu -p "🔊 Salida de audio" -theme "$THEME")
 [ -z "$chosen" ] && exit 0
 
-# Obtener ID real del dispositivo seleccionado
 selected=$(echo -e "$menu" | grep -F "$chosen" | cut -d'|' -f2)
 pactl set-default-sink "$selected"
 notify-send "Audio" "Salida cambiada a: $(echo "$chosen" | sed 's/^[✔ ]*//')" -t 2000
