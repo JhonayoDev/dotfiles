@@ -23,6 +23,7 @@ from libqtile.lazy import lazy
 from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER, apps
 from utils import notify
 from keys import make_keys
+from volume import get_volume_widget_text
 
 mod = "mod4"  # Tecla Super (Windows)
 mod1 = "mod1"  # Tecla Alt
@@ -393,12 +394,16 @@ def make_bar_primary():
             # Seccion del volumen
             widget.Spacer(length=6, background=colors["bg1"]),
             # Falta el icono de volumen
+            # Sección del volumen
             widget.Spacer(length=6, background=colors["bg1"]),
-            widget.PulseVolume(
-                font=font["mono"],
+            widget.GenPollText(
+                func=get_volume_widget_text,
+                update_interval=2,
+                font=font["icons"],
                 fontsize=font["size"],
-                padding=0,
                 background=colors["bg1"],
+                foreground=colors["fg0"],
+                padding=6,
             ),
             widget.Image(filename="~/.config/qtile/Assets/5.png"),
             widget.Image(
