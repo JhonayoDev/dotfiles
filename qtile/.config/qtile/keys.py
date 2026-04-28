@@ -101,7 +101,7 @@ def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, group
             [],
             "XF86AudioRaiseVolume",
             lazy.spawn(
-                'bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''
+                'bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''
             ),
             desc="Volumen +",
         ),
