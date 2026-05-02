@@ -20,7 +20,14 @@ import subprocess
 from libqtile import bar, layout, widget, hook, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen, KeyChord
 from libqtile.lazy import lazy
-from theme import colors, font, terminal as TERMINAL, filemanager as FILEMANAGER, apps
+from theme import (
+    colors,
+    font,
+    terminal as TERMINAL,
+    filemanager as FILEMANAGER,
+    apps,
+    wallpapers,
+)
 from utils import notify
 from keys import make_keys
 from volume import get_volume_widget_text
@@ -29,7 +36,8 @@ mod = "mod4"  # Tecla Super (Windows)
 mod1 = "mod1"  # Tecla Alt
 terminal = TERMINAL
 filemanager = FILEMANAGER
-
+ROFI_THEME = "/home/jhonayo/.config/rofi/themes/menu-apps.rasi"
+ROFI_THEME_2 = "/home/jhonayo/.config/rofi/themes/control-center.rasi"
 
 # ── 2. STICKY WINDOWS ───────────────────────────────────────
 # Una ventana "sticky" sigue al usuario cuando cambia de grupo.
@@ -155,30 +163,32 @@ GROUPS_SECONDARY = ["5", "6", "7", "8"]
 # ── 5. KEYBINDS ─────────────────────────────────────────────
 
 keys = make_keys(
-    toggle_sticky_windows(), window_to_next_screen, window_to_prev_screen, groups
+    toggle_sticky_windows(),
+    window_to_next_screen,
+    window_to_prev_screen,
+    groups,
 )
-
 # Keybinds para cada grupo
 # Super + 1-8        → ir al grupo N
 # Super + Shift + 1-8 → mover ventana al grupo N (y seguirla)
-for i in groups:
-    keys.extend(
-        [
-            Key(
-                [mod],
-                i.name,
-                lazy.group[i.name].toscreen(),
-                desc=f"Ir al grupo {i.name}",
-            ),
-            Key(
-                [mod, "shift"],
-                i.name,
-                lazy.window.togroup(i.name, switch_group=False),
-                desc=f"Mover ventana al grupo {i.name}",
-            ),
-        ]
-    )
-
+# for i in groups:
+#    keys.extend(
+#        [
+#            Key(
+#                [mod],
+#                i.name,
+#                lazy.group[i.name].toscreen(),
+#                desc=f"Ir al grupo {i.name}",
+#            ),
+#            Key(
+#                [mod, "shift"],
+#                i.name,
+#                lazy.window.togroup(i.name, switch_group=False),
+#                desc=f"Mover ventana al grupo {i.name}",
+#            ),
+#        ]
+#    )
+#
 
 # ── 6. LAYOUTS ───────────────────────────────────────────────
 # Cambiar layout: Super + Tab
@@ -191,29 +201,40 @@ for i in groups:
 # Tile     → master izquierda + stack derecha (clásico dwm-style)
 
 layouts = [
-    #    layout.MonadTall(margin=6, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3, ratio=0.6,),
+    # layout.MonadTall(
+    #     margin=4,
+    #     border_focus=colors["accent"],
+    #     border_normal=colors["dark"],
+    #     border_width=3,
+    #     ratio=0.5,
+    # ),
     layout.Tile(
-        margin=6,
+        margin=4,
         border_focus=colors["accent"],
         border_normal=colors["dark"],
         border_width=3,
-        ratio=0.6,
+        ratio=0.5,
     ),
     layout.Columns(
-        margin=6,
+        margin=4,
         border_focus=colors["accent"],
         border_normal=colors["dark"],
         border_width=3,
     ),
     layout.Max(
-        margin=6,
+        margin=4,
         border_focus=colors["accent"],
         border_normal=colors["dark"],
-        border_width=0,
+        border_width=3,
     ),
     #    layout.Floating(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
     #    layout.Matrix(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
-    #    layout.MonadWide(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
+    #  layout.MonadWide(
+    #      margin=0,
+    #      border_focus=colors["accent"],
+    #      border_normal=colors["dark"],
+    #      border_width=3,
+    #  ),
     #    layout.Tile(margin=0, border_focus=colors['accent'], border_normal=colors['dark'], border_width=3),
 ]
 
@@ -234,7 +255,11 @@ extension_defaults = widget_defaults.copy()
 
 
 def open_launcher():
-    qtile.spawn("rofi -theme rounded-green-dark -show drun")
+    qtile.spawn(f"rofi -show drun -theme {ROFI_THEME}")
+
+
+def open_info():
+    qtile.spawn("/home/jhonayo/.config/rofi/scripts/control_center.sh")
 
 
 def open_btop():
@@ -245,47 +270,81 @@ def make_bar_primary():
     return bar.Bar(
         [
             widget.Spacer(
-                length=18,
-                background=colors["bg0"],
+                length=4,
+                # background=colors["bg0"],
             ),
             widget.Image(
-                filename="~/.config/qtile/Assets/launch_Icon.png",
-                background=colors["bg0"],
-                mouse_callbacks={"Button1": open_launcher},
+                filename="~/.config/qtile/Assets/8.svg",
             ),
             widget.Image(
-                filename="~/.config/qtile/Assets/6.png",
+                #  filename="~/.config/qtile/Assets/launch_Icon.png",
+                filename="~/.config/qtile/Assets/astronaut-helmet-svgrepo-com.svg",
+                background=colors["fg0"],
+                mouse_callbacks={"Button1": open_launcher, "Button3": open_info},
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/0.svg",
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/2.svg",
             ),
             # Muestra solo los grupos del monitor principal (1-4)
             widget.GroupBox(
                 fontsize=font["size"],
-                borderwidth=0,
-                highlight_method="block",
-                active=colors["fg0"],
-                block_highlight_text_color="#00F076",
-                highlight_color=colors["purple"],
-                inactive=colors["fg2"],
-                foreground=colors["bg1"],
-                background=colors["bg1"],
-                this_current_screen_border=colors["bg2"],
-                this_screen_border=colors["purple"],
-                other_current_screen_border=colors["purple"],
-                other_screen_border=colors["purple"],
-                urgent_border=colors["purple"],
-                rounded=True,
-                disable_drag=True,
-                visible_groups=GROUPS_PRIMARY,
+                borderwidth=0,  # grosor del borde del highlight (0 = sin borde extra)
+                highlight_method="block",  # estilo de highlight: "block" rellena el fondo del grupo activo
+                active=colors[
+                    "fg0"
+                ],  # color del texto de grupos QUE TIENEN ventanas abiertas
+                block_highlight_text_color=colors[
+                    "fg1"
+                ],  # color del texto del grupo ACTUALMENTE SELECCIONADO
+                highlight_color=colors[
+                    "fg1"
+                ],  # color de fondo del grupo activo (solo en highlight_method="line")
+                inactive=colors[
+                    "bg0"
+                ],  # color del texto de grupos VACÍOS (sin ventanas)
+                foreground=colors["fg1"],  # color de texto general (fallback)
+                background=colors["bg1"],  # color de fondo de toda la sección de grupos
+                this_current_screen_border=colors[
+                    "bg2"
+                ],  # fondo del grupo activo EN ESTA pantalla
+                this_screen_border=colors[
+                    "purple"
+                ],  # borde del grupo visible (no activo) EN ESTA pantalla
+                other_current_screen_border=colors[
+                    "purple"
+                ],  # borde del grupo activo en OTRA pantalla
+                other_screen_border=colors[
+                    "purple"
+                ],  # borde de grupos visibles en OTRAS pantallas
+                urgent_border=colors[
+                    "purple"
+                ],  # color cuando hay notificación urgente en un grupo
+                rounded=True,  # esquinas redondeadas en el highlight
+                disable_drag=True,  # deshabilita arrastrar ventanas entre grupos con el mouse
+                visible_groups=GROUPS_PRIMARY,  # qué grupos mostrar (1-4 para monitor principal)
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(filename="~/.config/qtile/Assets/2.png"),
+            widget.Image(
+                filename="~/.config/qtile/Assets/1.svg",
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/2.svg",
+            ),
             widget.CurrentLayout(
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
                 padding=0,
+                foreground=colors["fg0"],  # ← color del texto
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(filename="~/.config/qtile/Assets/2.png"),
+            widget.Image(
+                filename="~/.config/qtile/Assets/1.svg",
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/2.svg",
+            ),
             widget.WindowName(
                 background=colors["bg1"],
                 format="{name}",
@@ -293,10 +352,13 @@ def make_bar_primary():
                 fontsize=font["size"],
                 empty_group_string="Desktop",
                 padding=0,
+                foreground=colors["fg0"],  # ← color del texto
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
             widget.Image(
-                filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
+                filename="~/.config/qtile/Assets/1.svg",
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/2.svg",
             ),
             # Widget de CPU
             widget.TextBox(
@@ -311,11 +373,12 @@ def make_bar_primary():
             widget.Spacer(length=4, background=colors["bg1"]),
             widget.CPU(
                 font=font["mono"],
-                format="CPU {load_percent:4.1f}%",
+                format="{load_percent:4.1f}%",
                 fontsize=font["size"],
                 margin=0,
                 padding=0,
                 background=colors["bg1"],
+                foreground=colors["fg0"],  # ← color del texto
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=6, background=colors["bg1"]),
@@ -337,6 +400,7 @@ def make_bar_primary():
                 fontsize=font["size"],
                 padding=0,
                 background=colors["bg1"],
+                foreground=colors["fg0"],  # ← color del texto
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
             widget.Spacer(length=6, background=colors["bg1"]),
@@ -370,7 +434,7 @@ def make_bar_primary():
             widget.GenPollText(
                 name="volume",
                 func=get_volume_widget_text,
-                update_interval=0.5,
+                update_interval=1,
                 font=font["icons"],
                 fontsize=font["size"],
                 background=colors["bg1"],
@@ -400,29 +464,33 @@ def make_bar_primary():
                 fontsize=font["size"],
                 background=colors["bg1"],
                 padding=4,
+                foreground=colors["fg0"],  # ← color del texto
             ),
             # Widget de Calendario
             widget.Spacer(length=4, background=colors["bg1"]),
-            widget.Image(
-                filename="~/.config/qtile/Assets/Bar-Icons/calendar.svg",
+            widget.TextBox(
+                text=" ",
+                font=font["icons"],
+                fontsize=font["isize"],
                 background=colors["bg1"],
-                margin_y=3,
-                scale=True,
+                foreground=colors["fg0"],
+                padding=4,
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
             widget.Clock(
                 format="%d/%m/%y ",
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
-                padding=0,
+                padding=2,
+                foreground=colors["fg0"],  # ← color del texto
             ),
-            widget.Image(
-                filename="~/.config/qtile/Assets/Bar-Icons/clock.svg",
+            widget.TextBox(
+                text=" ",
+                font=font["icons"],
+                fontsize=font["isize"],
                 background=colors["bg1"],
-                margin_y=3,
-                margin_x=5,
-                scale=True,
+                foreground=colors["fg0"],
+                padding=2,
             ),
             widget.Clock(
                 format="%H:%M",
@@ -430,97 +498,135 @@ def make_bar_primary():
                 font=font["mono"],
                 fontsize=font["size"],
                 padding=0,
+                foreground=colors["fg0"],  # ← color del texto
             ),
-            widget.Spacer(length=18, background=colors["bg1"]),
+            widget.Image(
+                filename="~/.config/qtile/Assets/1.svg",
+            ),
+            widget.Spacer(
+                length=4,
+                #  background=colors["bg0"]
+            ),
         ],
         30,
-        margin=[0, 8, 6, 8],
+        margin=[2, 8, 4, 8],
+        background="#00000000",
     )
 
 
 def make_bar_secondary():
     return bar.Bar(
         [
-            widget.Spacer(length=18, background=colors["bg0"]),
+            widget.Spacer(
+                length=4,
+                # background=colors["bg0"],
+            ),
+            widget.Image(
+                filename="~/.config/qtile/Assets/2.svg",
+            ),
             # Muestra solo los grupos del monitor secundario (5-8)
             widget.GroupBox(
                 fontsize=font["size"],
-                borderwidth=0,
-                highlight_method="block",
-                active=colors["fg0"],
-                block_highlight_text_color="#00F076",
-                highlight_color=colors["purple"],
-                inactive=colors["fg2"],
-                foreground=colors["bg1"],
-                background=colors["bg1"],
-                this_current_screen_border=colors["bg2"],
-                this_screen_border=colors["purple"],
-                other_current_screen_border=colors["purple"],
-                other_screen_border=colors["purple"],
-                rounded=True,
-                disable_drag=True,
+                borderwidth=0,  # grosor del borde del highlight (0 = sin borde extra)
+                highlight_method="block",  # estilo de highlight: "block" rellena el fondo del grupo activo
+                active=colors[
+                    "fg0"
+                ],  # color del texto de grupos QUE TIENEN ventanas abiertas
+                block_highlight_text_color=colors[
+                    "fg1"
+                ],  # color del texto del grupo ACTUALMENTE SELECCIONADO
+                highlight_color=colors[
+                    "fg1"
+                ],  # color de fondo del grupo activo (solo en highlight_method="line")
+                inactive=colors[
+                    "bg0"
+                ],  # color del texto de grupos VACÍOS (sin ventanas)
+                foreground=colors["fg1"],  # color de texto general (fallback)
+                background=colors["bg1"],  # color de fondo de toda la sección de grupos
+                this_current_screen_border=colors[
+                    "bg2"
+                ],  # fondo del grupo activo EN ESTA pantalla
+                this_screen_border=colors[
+                    "purple"
+                ],  # borde del grupo visible (no activo) EN ESTA pantalla
+                other_current_screen_border=colors[
+                    "purple"
+                ],  # borde del grupo activo en OTRA pantalla
+                other_screen_border=colors[
+                    "purple"
+                ],  # borde de grupos visibles en OTRAS pantallas
+                urgent_border=colors[
+                    "purple"
+                ],  # color cuando hay notificación urgente en un grupo
+                rounded=True,  # esquinas redondeadas en el highlight
+                disable_drag=True,  # deshabilita arrastrar ventanas entre grupos con el mouse
                 visible_groups=GROUPS_SECONDARY,
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(filename="~/.config/qtile/Assets/2.png"),
+            widget.Image(filename="~/.config/qtile/Assets/1.svg"),
+            widget.Image(filename="~/.config/qtile/Assets/2.svg"),
             widget.CurrentLayout(
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
                 padding=0,
+                foreground=colors["fg0"],  # ← color del texto
             ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(filename="~/.config/qtile/Assets/2.png"),
-            #        widget.WindowName(background=colors['bg1'], font=font['mono'],
-            #                          fontsize=font['size'], empty_group_string='Desktop', padding=0),
-            widget.Spacer(background=colors["bg1"]),
-            widget.Image(
-                filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
-            ),
-            #           widget.CPU(
-            #               font=font["mono"],
-            #               format="CPU:({load_percent:.1f}%)",
-            #               fontsize=font["size"],
-            #               padding=0,
-            #               background=colors["bg1"],
-            #               mouse_callbacks={"Button1": open_btop},
-            #           ),
-            widget.Image(filename="~/.config/qtile/Assets/5.png"),
-            widget.Image(
-                filename="~/.config/qtile/Assets/1.png", background=colors["purple"]
-            ),
-            widget.Image(
-                filename="~/.config/qtile/Assets/Bar-Icons/calendar.svg",
+            widget.Image(filename="~/.config/qtile/Assets/1.svg"),
+            widget.Image(filename="~/.config/qtile/Assets/2.svg"),
+            widget.WindowName(
                 background=colors["bg1"],
-                margin_y=3,
-                scale=True,
+                format="{name}",
+                font=font["mono"],
+                fontsize=font["size"],
+                empty_group_string="Desktop",
+                foreground=colors["fg0"],  # ← color del texto
+                padding=0,
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Image(filename="~/.config/qtile/Assets/1.svg"),
+            widget.Image(filename="~/.config/qtile/Assets/2.svg"),
+            widget.TextBox(
+                text=" ",
+                font=font["icons"],
+                fontsize=font["isize"],
+                background=colors["bg1"],
+                foreground=colors["fg0"],
+                padding=4,
+            ),
             widget.Clock(
                 format="%d/%m/%y ",
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
-                padding=0,
+                foreground=colors["fg0"],  # ← color del texto
+                padding=2,
             ),
-            widget.Image(
-                filename="~/.config/qtile/Assets/Bar-Icons/clock.svg",
+            widget.TextBox(
+                text=" ",
+                font=font["icons"],
+                fontsize=font["isize"],
                 background=colors["bg1"],
-                margin_y=3,
-                margin_x=5,
-                scale=True,
+                foreground=colors["fg0"],
+                padding=2,
             ),
             widget.Clock(
                 format="%H:%M",
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
+                foreground=colors["fg0"],  # ← color del texto
                 padding=0,
             ),
-            widget.Spacer(length=18, background=colors["bg1"]),
+            widget.Image(
+                filename="~/.config/qtile/Assets/1.svg",
+            ),
+            widget.Spacer(
+                length=4,
+                # background=colors["bg0"]
+            ),
         ],
         30,
         margin=[0, 8, 6, 8],
+        background="#00000000",
     )
 
 
@@ -529,21 +635,21 @@ def make_bar_secondary():
 # El primero siempre tiene la barra completa.
 # Los adicionales tienen la barra secundaria.
 
+
 screens = [
     Screen(
         top=make_bar_primary(),
-        wallpaper="~/.config/qtile/Wallpaper/catilloinfinito.jpg",
-        wallpaper_mode="fill",
+        wallpaper=wallpapers["primary"],
+        wallpaper_mode=wallpapers["mode"],
     )
 ] + [
     Screen(
         top=make_bar_secondary(),
-        wallpaper="~/.config/qtile/Wallpaper/Skyscraper.png",
-        wallpaper_mode="fill",
+        wallpaper=wallpapers["secondary"],
+        wallpaper_mode=wallpapers["mode"],
     )
     for _ in range(NUM_MONITORS - 1)
 ]
-
 
 # ── 9. CONFIGURACIÓN GENERAL ─────────────────────────────────
 

@@ -1,0 +1,51 @@
+[global]
+    monitor = 0
+    follow = mouse
+    width = 300
+    height = 100
+    origin = top-right
+    offset = 10x40
+    scale = 0
+    notification_limit = 5
+    frame_width = 2
+    frame_color = "#048DB8"
+    corner_radius = 10
+    gap_size = 6
+    font = JetBrainsMono Nerd Font 11
+    padding = 10
+    horizontal_padding = 12
+    text_icon_padding = 8
+    icon_position = left
+    min_icon_size = 24
+    max_icon_size = 32
+    show_age_threshold = 60
+    hide_duplicate_count = false
+    sort = yes
+    idle_threshold = 120
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    word_wrap = yes
+    ellipsize = middle
+    ignore_newline = no
+    stack_duplicates = true
+    icon_path = /usr/share/icons/Adwaita/16x16/status/:/usr/share/icons/Adwaita/16x16/devices/:/usr/share/icons/hicolor/16x16/apps/
+
+[urgency_low]
+    foreground = "#A8E6FF"
+    background = "#161C40"
+    frame_color = "#161C40"
+    timeout = 3
+
+[urgency_normal]
+    background = "#07060D"
+    foreground = "#A8E6FF"
+    frame_color = "#048DB8"
+    timeout = 5
+
+[urgency_critical]
+    background = "#07060D"
+    foreground = "#FF5555"
+    frame_color = "#FF5555"
+    timeout = 5

@@ -17,25 +17,34 @@ mainbox {
     background-color:   @bg1;
 }
 
+/* Barra de búsqueda */
 inputbar {
-    background-color:   transparent;
+    background-color:   @bg2;
+    border-radius:      10px;
+    border:             2px;
+    border-color:       @fg2;
     padding:            10px 16px;
     spacing:            10px;
-    children:           [ prompt];
+    children:           [ prompt, entry ];
 }
 
 prompt {
-    enable:           false;
     background-color: transparent;
-    text-color:       @fg0;
+    text-color: @fg0;
 }
 
+entry {
+    placeholder:        "Buscar aplicaciones...";
+    placeholder-color:  @fg0;
+    text-color:         @bg1;
+    background-color:   transparent;
+}
 
 /* Lista de resultados */
 listview {
     background-color:   transparent;
     margin:             8px 0 0;
-    lines:              5;
+    lines:              8;
     columns:            1;
     fixed-height:       false;
     spacing:            4px;
@@ -71,4 +80,15 @@ element-text {
     text-color:         @fg0;
 }
 
+/* Separador entre secciones */
+message {
+    margin:             8px 0 0;
+    border-radius:      10px;
+    background-color:   transparent;
+}
 
+textbox {
+    padding:            8px 14px;
+    text-color:         @bg1;
+    background-color:   transparent;
+}

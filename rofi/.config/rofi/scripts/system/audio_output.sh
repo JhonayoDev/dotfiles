@@ -8,17 +8,17 @@ current=$(pactl info | grep "Destino por defecto" | awk '{print $NF}')
 # Construir lista
 menu=""
 while read -r line; do
-    if [[ $line == *"Nombre:"* ]]; then
-        id=$(echo "$line" | awk '{print $2}')
+  if [[ $line == *"Nombre:"* ]]; then
+    id=$(echo "$line" | awk '{print $2}')
+  fi
+  if [[ $line == *"Descripción:"* ]]; then
+    desc=$(echo "$line" | cut -d':' -f2- | sed 's/^ //')
+    if [ "$id" = "$current" ]; then
+      menu="${menu}✔ $desc|$id\n"
+    else
+      menu="${menu}  $desc|$id\n"
     fi
-    if [[ $line == *"Descripción:"* ]]; then
-        desc=$(echo "$line" | cut -d':' -f2- | sed 's/^ //')
-        if [ "$id" = "$current" ]; then
-            menu="${menu}✔ $desc|$id\n"
-        else
-            menu="${menu}  $desc|$id\n"
-        fi
-    fi
+  fi
 done < <(pactl list sinks)
 
 [ -z "$menu" ] && notify-send "Audio" "No se encontraron dispositivos" && exit 1

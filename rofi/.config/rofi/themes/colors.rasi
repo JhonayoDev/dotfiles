@@ -1,0 +1,10 @@
+* {
+    bg0:     #07060D;
+    bg1:     #161C40;
+    bg2:     #007594;
+    accent:  #048DB8;
+    fg0:     #A8E6FF;
+    fg1:     #E0E0E0;
+    fg2:     #006E5F;
+    font:    "JetBrainsMono Nerd Font 13";
+}

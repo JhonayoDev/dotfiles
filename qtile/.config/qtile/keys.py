@@ -10,10 +10,15 @@ mod = "mod4"
 mod1 = "mod1"
 
 SCRIPTS = "/home/jhonayo/.config/qtile/scripts"
-ROFI_THEME = "/home/jhonayo/.config/rofi/themes/control-center.rasi"
+ROFI_THEME = "/home/jhonayo/.config/rofi/themes/menu-apps.rasi"
 
 
-def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, groups):
+def make_keys(
+    toggle_sticky,
+    window_to_next_screen,
+    window_to_prev_screen,
+    groups,
+):
     keys = [
         # ── Trackpad ──────────────────────────────────────────
         Key(
@@ -26,7 +31,7 @@ def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, group
         Key(
             [mod],
             "space",
-            lazy.spawn(f"rofi -show drun -theme {ROFI_THEME}"),
+            lazy.spawn(f"rofi -show drun -theme {ROFI_THEME} -p -display-drun ''"),
             desc="Launcher",
         ),
         Key(
@@ -71,7 +76,7 @@ def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, group
         Key([mod], "s", toggle_sticky, desc="Toggle sticky"),
         # ── Sistema ───────────────────────────────────────────
         Key([mod], "Return", lazy.spawn(terminal), desc="Terminal"),
-        Key([mod], "Tab", lazy.next_layout(), desc="Cambiar layout"),
+        Key([mod, "shift"], "Tab", lazy.next_layout(), desc="Cambiar layout"),
         Key([mod, "control"], "r", lazy.reload_config(), desc="Recargar config"),
         Key([mod, "control"], "q", lazy.shutdown(), desc="Salir de Qtile"),
         Key([mod], "e", lazy.spawn(filemanager), desc="Gestor de archivos"),
@@ -128,19 +133,15 @@ def make_keys(toggle_sticky, window_to_next_screen, window_to_prev_screen, group
         # ── Brillo ────────────────────────────────────────────
         Key(
             [],
-            "F1",
-            lazy.spawn(
-                'bash -c \'brightnessctl s 10%- && notify-send --replace-id=3000 --expire-time=1200 "Brillo" "$(brightnessctl g | awk "{print int(\\$1/$(brightnessctl m)*100)}")%"\''
-            ),
-            desc="Brillo -",
+            "F2",
+            lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh up"),
+            desc="Brillo +",
         ),
         Key(
             [],
-            "F2",
-            lazy.spawn(
-                'bash -c \'brightnessctl s 10%+ && notify-send --replace-id=3000 --expire-time=1200 "Brillo" "$(brightnessctl g | awk "{print int(\\$1/$(brightnessctl m)*100)}")%"\''
-            ),
-            desc="Brillo +",
+            "F1",
+            lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh down"),
+            desc="Brillo -",
         ),
         # ── Screenshots ───────────────────────────────────────
         Key([mod], "p", lazy.spawn("flameshot gui"), desc="Screenshot región"),

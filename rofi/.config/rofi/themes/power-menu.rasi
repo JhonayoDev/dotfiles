@@ -1,16 +1,16 @@
 /* =========================================================
-   CONTROL CENTER THEME — Grid mode
+   POWER MENU THEME — Grid mode
    ========================================================= */
 @import "colors.rasi"
 
 listview {
     lines: 1;
-    columns: 4;
+    columns: 5;
     spacing: 10px;
 }
 window {
     location:           center;
-    width:              520px;
+    width:              620px;
     border-radius:      16px;
     border:             3px;
     border-color:       @bg2;
@@ -18,7 +18,7 @@ window {
 
 mainbox {
     padding:            20px;
-    spacing:            14px;
+    spacing:            10px;
     background-color:   @bg1;
 }
 

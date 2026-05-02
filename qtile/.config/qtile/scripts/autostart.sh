@@ -18,17 +18,13 @@ else
   xrandr --output $INTERNAL --mode 1920x1200 --primary
 fi
 
-# Tema oscuro GTK3 y GTK4
-export GTK_THEME=Adwaita-dark
-gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-
 picom --daemon &
 /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &
 eval $(gnome-keyring-daemon --start)
 nm-applet &
 blueman-applet &
 setxkbmap us && echo "US" >/tmp/kb_layout
+
 # Tema oscuro GTK
 dbus-update-activation-environment --systemd DISPLAY XAUTHORITY
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
@@ -38,4 +34,5 @@ xsettingsd &
 # Mouse buttons
 pkill -f mouse-buttons.py 2>/dev/null
 python3 "/home/jhonayo/dotfiles/scripts/mouse-buttons.py" &
+python3 "/home/jhonayo/dotfiles/scripts/apply-theme.py" &
 dunst &
