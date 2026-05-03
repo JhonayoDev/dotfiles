@@ -28,6 +28,7 @@ from theme import (
     apps,
     wallpapers,
 )
+from battery import get_battery_text
 from utils import notify
 from keys import make_keys
 from volume import get_volume_widget_text
@@ -337,7 +338,7 @@ def make_bar_primary():
                 font=font["mono"],
                 fontsize=font["size"],
                 padding=0,
-                foreground=colors["fg0"],  # ← color del texto
+                foreground=colors["fg0"],
             ),
             widget.Image(
                 filename="~/.config/qtile/Assets/1.svg",
@@ -362,26 +363,26 @@ def make_bar_primary():
             ),
             # Widget de CPU
             widget.TextBox(
-                text="󰍹",
+                text="󰍹 ",
                 font=font["icons"],
                 fontsize=font["isize"],
                 background=colors["bg1"],
                 foreground=colors["fg0"],
-                padding=6,
+                padding=2,
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             widget.CPU(
                 font=font["mono"],
                 format="{load_percent:4.1f}%",
                 fontsize=font["size"],
                 margin=0,
-                padding=0,
+                padding=2,
                 background=colors["bg1"],
                 foreground=colors["fg0"],  # ← color del texto
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             # Widget de RAM
             widget.TextBox(
                 text="󰍛",
@@ -389,10 +390,10 @@ def make_bar_primary():
                 fontsize=font["isize"],
                 background=colors["bg1"],
                 foreground=colors["fg0"],
-                padding=6,
+                padding=2,
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.Spacer(length=0, background=colors["bg1"]),
             widget.Memory(
                 format="{MemUsed:4.1f} GB",
                 measure_mem="G",
@@ -403,7 +404,7 @@ def make_bar_primary():
                 foreground=colors["fg0"],  # ← color del texto
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             # Widget de temperatura
             widget.TextBox(
                 text="󰔏",
@@ -414,7 +415,7 @@ def make_bar_primary():
                 padding=6,
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             widget.ThermalSensor(
                 font=font["mono"],
                 fontsize=font["size"],
@@ -426,11 +427,11 @@ def make_bar_primary():
                 tag_sensor="Package id 0",  # sensor principal del Mac
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             # Systray: íconos del sistema. Solo puede haber uno en toda la config.
             widget.Systray(background=colors["bg1"], icon_size=24, padding=4),
             # Sección del volumen
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             widget.GenPollText(
                 name="volume",
                 func=get_volume_widget_text,
@@ -439,9 +440,9 @@ def make_bar_primary():
                 fontsize=font["size"],
                 background=colors["bg1"],
                 foreground=colors["fg0"],
-                padding=6,
+                padding=4,
             ),
-            widget.Spacer(length=6, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             # Widget de Idioma Input
             widget.TextBox(
                 text="󰌌",
@@ -452,7 +453,7 @@ def make_bar_primary():
                 padding=4,
                 mouse_callbacks={"Button1": lambda: qtile.spawn(apps["monitor"])},
             ),
-            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             widget.GenPollText(
                 func=lambda: (
                     open("/tmp/kb_layout").read().strip()
@@ -466,8 +467,18 @@ def make_bar_primary():
                 padding=4,
                 foreground=colors["fg0"],  # ← color del texto
             ),
+            # Widget de batería
+            widget.GenPollText(
+                func=get_battery_text,
+                update_interval=3,
+                font=font["mono"],
+                fontsize=font["size"],
+                background=colors["bg1"],
+                foreground=colors["fg0"],
+                padding=4,
+            ),
             # Widget de Calendario
-            widget.Spacer(length=4, background=colors["bg1"]),
+            widget.Spacer(length=2, background=colors["bg1"]),
             widget.TextBox(
                 text=" ",
                 font=font["icons"],
@@ -481,7 +492,7 @@ def make_bar_primary():
                 background=colors["bg1"],
                 font=font["mono"],
                 fontsize=font["size"],
-                padding=2,
+                padding=0,
                 foreground=colors["fg0"],  # ← color del texto
             ),
             widget.TextBox(
