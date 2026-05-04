@@ -2,18 +2,11 @@
 # ~/dotfiles/install.sh
 #
 # Aplica dotfiles mediante GNU Stow según el perfil elegido.
-#
-# Uso:
-#   bash install.sh            → perfil "desktop" (todo)
-#   bash install.sh devbox     → perfil "devbox"  (nvim + zsh + git + lazygit)
-#   bash install.sh desktop    → perfil "desktop" (todo)
 set -euo pipefail
 
-# ─── Configuración ────────────────────────────────────────────
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROFILE="${1:-desktop}"
 
-# ─── Colores ──────────────────────────────────────────────────
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -26,9 +19,28 @@ error() { echo -e "${RED}[ERROR]${NC} $*"; }
 info() { echo -e "${CYAN}[INFO]${NC}  $*"; }
 section() { echo -e "\n${BOLD}── $* ──${NC}"; }
 
-# ─── Función central: stow de un módulo ───────────────────────
-# Uso: stow_module <nombre_del_modulo>
-# El módulo debe existir como carpeta en $DOTFILES_DIR
+# ─── Backup de archivos reales que conflictúan con stow ───────
+# Busca archivos reales (no symlinks) que stow va a intentar crear
+# y los mueve a .bak antes de aplicar.
+backup_conflicts() {
+  local module="$1"
+  local module_path="$DOTFILES_DIR/$module"
+
+  # Recorrer los archivos del módulo y verificar conflictos en $HOME
+  while IFS= read -r -d '' src_file; do
+    # Ruta relativa al módulo (ej: .config/nvim/init.lua)
+    local rel="${src_file#$module_path/}"
+    local dest="$HOME/$rel"
+
+    # Si existe como archivo real (no symlink), hacer backup
+    if [[ -e "$dest" && ! -L "$dest" ]]; then
+      local bak="${dest}.bak_$(date +%Y%m%d_%H%M%S)"
+      warn "Backup: $dest → $bak"
+      mv "$dest" "$bak"
+    fi
+  done < <(find "$module_path" -type f -print0)
+}
+
 stow_module() {
   local module="$1"
   local module_path="$DOTFILES_DIR/$module"
@@ -38,8 +50,8 @@ stow_module() {
     return
   fi
 
-  # --restow: re-crea symlinks si ya existen (idempotente)
-  # --target: destino explícito ($HOME)
+  backup_conflicts "$module"
+
   stow --dir="$DOTFILES_DIR" --target="$HOME" --restow "$module"
   success "Stow: $module → $HOME"
 }

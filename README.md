@@ -8,6 +8,7 @@ sudo apt install tree
 sudo apt install curl
 sudo apt install mbpfan
 sudo apt install stow
+sudo apt install jq
 ```
 
 ```bash
