@@ -576,3 +576,46 @@ sudo apt install ./onlyoffice-desktopeditors_amd64.deb -y
 > Para el manejo de referencias recomiendan Zotero, que aun no he instalado
 
 #### instalacion de Tailscale para manejo remoto del servidor
+
+- instalacion via script oficial
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+```
+
+- iniciar cliente tailscale
+
+```bash
+sudo tailscale up
+
+```
+
+> entrar al link y autenticarse
+
+#### instalacion de devpod
+
+- descarga con link de pagina oficial
+
+```bash
+curl -L -o devpod "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64" && sudo install -c -m 0755 devpod /usr/local/bin && rm -f devpod
+```
+
+##### configuracion
+
+- proveedor es docker
+
+```bash
+# Agregar el proveedor docker
+devpod provider add docker
+```
+
+```bash
+# Activarlo como default
+devpod provider use docker
+```
+
+- verificar
+
+```bash
+devpod provider list
+```

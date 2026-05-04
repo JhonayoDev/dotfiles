@@ -1,0 +1,36 @@
+@import "colors.rasi"
+
+window {
+    location: center;
+    width: 700px;
+    border-radius: 16px;
+    border: 3px;
+    border-color: @accent;
+}
+
+mainbox {
+    padding: 20px;
+    background-color: @bg1;
+}
+
+listview {
+    columns: 1;
+    lines: 20;
+    spacing: 6px;
+    fixed-height: true;
+}
+
+element {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+element selected {
+    background-color: @bg2;
+}
+
+element-text {
+    font: "JetBrainsMono Nerd Font 12";
+    text-color: @fg0;
+}

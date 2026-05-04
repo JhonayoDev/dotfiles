@@ -15,3 +15,5 @@ end, { desc = "Insert Template" })
 vim.keymap.set("n", "<leader>fg", function()
   templates.create_gitignore()
 end, { desc = "Create .gitignore" })
+
+vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]])

@@ -29,7 +29,7 @@ from theme import (
     wallpapers,
 )
 from battery import get_battery_text
-from utils import notify
+from utils import notify, show_keybindings_help
 from keys import make_keys
 from volume import get_volume_widget_text
 
@@ -281,7 +281,10 @@ def make_bar_primary():
                 #  filename="~/.config/qtile/Assets/launch_Icon.png",
                 filename="~/.config/qtile/Assets/astronaut-helmet-svgrepo-com.svg",
                 background=colors["fg0"],
-                mouse_callbacks={"Button1": open_launcher, "Button3": open_info},
+                mouse_callbacks={
+                    "Button1": open_launcher,
+                    "Button3": show_keybindings_help,
+                },
             ),
             widget.Image(
                 filename="~/.config/qtile/Assets/0.svg",

@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
 # ~/dotfiles/install.sh
 #
-# Instala dotfiles mediante symlinks según el perfil elegido.
-# No usa GNU Stow — trabaja directamente con la estructura actual del repo.
+# Aplica dotfiles mediante GNU Stow según el perfil elegido.
 #
 # Uso:
 #   bash install.sh            → perfil "desktop" (todo)
-#   bash install.sh devbox     → perfil "devbox"  (nvim + zsh)
+#   bash install.sh devbox     → perfil "devbox"  (nvim + zsh + git + lazygit)
 #   bash install.sh desktop    → perfil "desktop" (todo)
-#
-# Perfiles disponibles:
-#   devbox   → nvim, zsh (.zshrc + .p10k.zsh)
-#   desktop  → devbox + wezterm, btop, lazygit, lazydocker, git, rofi
-
 set -euo pipefail
 
 # ─── Configuración ────────────────────────────────────────────
@@ -26,111 +20,58 @@ RED='\033[0;31m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
-
 success() { echo -e "${GREEN}[OK]${NC}    $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 error() { echo -e "${RED}[ERROR]${NC} $*"; }
 info() { echo -e "${CYAN}[INFO]${NC}  $*"; }
 section() { echo -e "\n${BOLD}── $* ──${NC}"; }
 
-# ─── Función central: crear symlink con backup ─────────────────
-# Uso: link <origen_relativo_al_repo> <destino_absoluto>
-link() {
-  local src="$DOTFILES_DIR/$1"
-  local dest="$2"
+# ─── Función central: stow de un módulo ───────────────────────
+# Uso: stow_module <nombre_del_modulo>
+# El módulo debe existir como carpeta en $DOTFILES_DIR
+stow_module() {
+  local module="$1"
+  local module_path="$DOTFILES_DIR/$module"
 
-  # Verificar que el origen existe
-  if [[ ! -e "$src" ]]; then
-    warn "Origen no encontrado: $src (omitiendo)"
+  if [[ ! -d "$module_path" ]]; then
+    warn "Módulo no encontrado: $module (omitiendo)"
     return
   fi
 
-  # Si ya es el symlink correcto, no hacer nada
-  if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then
-    success "Ya enlazado: $dest"
-    return
-  fi
-
-  # Si existe algo (archivo real o symlink diferente), hacer backup
-  if [[ -e "$dest" || -L "$dest" ]]; then
-    local bak="${dest}.bak_$(date +%Y%m%d_%H%M%S)"
-    warn "Backup: $dest → $bak"
-    mv "$dest" "$bak"
-  fi
-
-  # Crear directorio padre si no existe
-  mkdir -p "$(dirname "$dest")"
-
-  ln -sfn "$src" "$dest"
-  success "Linked: $dest → $src"
-}
-
-# ─── Instaladores por paquete ─────────────────────────────────
-
-install_nvim() {
-  section "Neovim"
-  link ".config/nvim" "$HOME/.config/nvim"
-}
-
-install_zsh() {
-  section "Zsh"
-  link ".zshrc" "$HOME/.zshrc"
-  link ".p10k.zsh" "$HOME/.p10k.zsh"
-}
-
-install_wezterm() {
-  section "WezTerm"
-  link ".config/wezterm" "$HOME/.config/wezterm"
-}
-
-install_btop() {
-  section "btop"
-  link "btop" "$HOME/.config/btop"
-}
-
-install_lazygit() {
-  section "Lazygit"
-  link "lazygit" "$HOME/.config/lazygit"
-}
-
-install_lazydocker() {
-  section "Lazydocker"
-  link "lazydocker" "$HOME/.config/lazydocker"
-}
-
-install_git() {
-  section "Git"
-  link "git/.gitconfig" "$HOME/.gitconfig"
-  link "git/.gitignore_global" "$HOME/.config/git/.gitignore_global"
-}
-
-install_rofi() {
-  section "Rofi"
-  link "rofi" "$HOME/.config/rofi"
+  # --restow: re-crea symlinks si ya existen (idempotente)
+  # --target: destino explícito ($HOME)
+  stow --dir="$DOTFILES_DIR" --target="$HOME" --restow "$module"
+  success "Stow: $module → $HOME"
 }
 
 # ─── Perfiles ─────────────────────────────────────────────────
-
 profile_devbox() {
   info "Perfil: devbox (nvim + zsh + git + lazygit)"
-  install_nvim
-  install_zsh
-  install_git
-  install_lazygit
+  section "nvim"
+  stow_module nvim
+  section "zsh"
+  stow_module zsh
+  section "git"
+  stow_module git
+  section "lazygit"
+  stow_module lazygit
 }
 
 profile_desktop() {
   info "Perfil: desktop (todo)"
-  # Incluye todo lo del devbox
-  install_nvim
-  install_zsh
-  # Más el escritorio completo
-  install_wezterm
-  install_btop
-  install_lazygit
-  install_lazydocker
-  install_git
-  install_rofi
+  profile_devbox
+  section "wezterm"
+  stow_module wezterm
+  section "dunst"
+  stow_module dunst
+  section "rofi"
+  stow_module rofi
+  section "gtk"
+  stow_module gtk
+  section "xsettingsd"
+  stow_module xsettingsd
+  section "qtile"
+  stow_module qtile
 }
 
 # ─── Main ─────────────────────────────────────────────────────
@@ -141,6 +82,7 @@ main() {
   echo "  │  perfil: ${PROFILE}$(printf '%*s' $((31 - ${#PROFILE})) '')│"
   echo "  └────────────────────────────────────────┘"
   echo -e "${NC}"
+
   info "Dotfiles dir: $DOTFILES_DIR"
   info "Destino:      $HOME"
 

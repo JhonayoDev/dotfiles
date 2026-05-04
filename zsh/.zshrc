@@ -277,3 +277,5 @@ if [ -z "$SDKMAN_DIR" ]; then
   fi
 fi
 export PATH="$HOME/.local/bin:$PATH"
+
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
