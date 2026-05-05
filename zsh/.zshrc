@@ -263,11 +263,18 @@ alias picom-start='picom --backend xrender --daemon'
 alias nv='nvim'
 alias fix-bar='$HOME/dev/projects/desktop/eww-bar/eww/bar/scripts/launch-force'
 
-# SSH agent
-if [ -z "$SSH_AUTH_SOCK" ]; then
-    eval "$(ssh-agent -s)" > /dev/null
+## SSH agent
+# SSH agent (solo en host)
+if [ -z "$DEVCONTAINER" ] && [ -z "$REMOTE_CONTAINERS" ]; then
+  if ! ssh-add -l >/dev/null 2>&1; then
     ssh-add ~/.ssh/id_ed25519 2>/dev/null
+  fi
 fi
+# old para revisar despues
+#if [ -z "$SSH_AUTH_SOCK" ]; then
+#    eval "$(ssh-agent -s)" > /dev/null
+#    ssh-add ~/.ssh/id_ed25519 2>/dev/null
+#fi
 # En ~/.zshrc, reemplazá la línea actual por esto:
 if [ -z "$SDKMAN_DIR" ]; then
   if [ -d "/usr/local/sdkman" ]; then

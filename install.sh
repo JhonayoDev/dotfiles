@@ -63,10 +63,10 @@ profile_devbox() {
   stow_module nvim
   section "zsh"
   stow_module zsh
-  section "git"
-  stow_module git
-  section "lazygit"
-  stow_module lazygit
+  #section "git"
+  #stow_module git>wezterm
+  #section "lazygit"
+  #stow_module lazygit
 }
 
 profile_desktop() {
