@@ -67,6 +67,40 @@ profile_devbox() {
   #stow_module git>wezterm
   #section "lazygit"
   #stow_module lazygit
+  # ─── Oh My Zsh + plugins + powerlevel10k ───────────────────
+  section "Oh My Zsh + plugins + powerlevel10k"
+  if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+    KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    success "Oh My Zsh instalado"
+  else
+    success "Oh My Zsh ya presente"
+  fi
+
+  ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+  for plugin_repo in \
+    "zsh-users/zsh-autosuggestions" \
+    "zsh-users/zsh-syntax-highlighting" \
+    "zsh-users/zsh-completions"; do
+    plugin_name=$(basename "$plugin_repo")
+    plugin_dir="$ZSH_CUSTOM/plugins/$plugin_name"
+    if [[ ! -d "$plugin_dir" ]]; then
+      git clone --depth=1 "https://github.com/$plugin_repo" "$plugin_dir"
+      success "Plugin: $plugin_name"
+    fi
+  done
+
+  if [[ ! -d "$ZSH_CUSTOM/themes/powerlevel10k" ]]; then
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+      "$ZSH_CUSTOM/themes/powerlevel10k"
+    success "Tema: powerlevel10k"
+  fi
+  section "zsh como shell por defecto"
+  if [[ "$(getent passwd vscode | cut -d: -f7)" != "$(which zsh)" ]]; then
+    sudo chsh -s "$(which zsh)" vscode
+    success "Shell cambiado a zsh"
+  else
+    success "zsh ya es el shell por defecto"
+  fi
 }
 
 profile_desktop() {
