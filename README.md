@@ -77,6 +77,35 @@ o
 git switch --track origin/rama
 ```
 
+#### wezterm
+
+- instalacion con links oficiales
+
+```bash
+curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+sudo chmod 644 /usr/share/keyrings/wezterm-fury.gpg
+```
+
+Update your dependencies:
+
+```bash
+sudo apt update
+```
+
+Now you can install wezterm:
+
+```bash
+sudo apt install wezterm
+```
+
+pasar configuracion
+
+```bash
+cd ~/dotfiles
+stow wezterm
+```
+
 #### nvim
 
 - sacado desde pagina oficial de nvim
