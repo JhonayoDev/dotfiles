@@ -574,6 +574,26 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 ```
 
+#### Lazydocker
+
+- instalar con comando oficial
+
+```bash
+curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+```
+
+- añadir alias
+
+```bas
+echo "alias lzd='lazydocker'" >> ~/.zshrc
+```
+
+- refrescar terminal
+
+```bash
+source ~/.zshrc
+```
+
 #### instalacion OnlyOffice y soporte para documentos .Docx
 
 - primer paso hacer update e instalar las fuentes Microsoft en Ubuntu/Debian
