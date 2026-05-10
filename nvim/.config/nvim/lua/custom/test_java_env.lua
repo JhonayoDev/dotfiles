@@ -113,7 +113,8 @@ local function read_maven_version()
 
   -- Fallback 1: sdkman current symlink
   if not java_home or java_home == "" then
-    local sdkman_current = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java/current"
+    local sdkman = require("custom.java_sdkman")
+    local sdkman_current = sdkman.candidates_dir() .. "/current"
     local link = vim.fn.resolve(sdkman_current)
     if link ~= sdkman_current then
       java_home = link
@@ -147,41 +148,10 @@ end
 
 ---Devuelve lista de JDKs instalados en sdkman.
 ---@return table[]  lista de { version="21", path="...", is_current=bool }
+-- Reemplazar la función list_sdkman_javas() completa por esto:
 local function list_sdkman_javas()
-  local sdkman_dir = (os.getenv("HOME") or "") .. "/.sdkman/candidates/java"
-  local handle = io.popen("ls " .. sdkman_dir .. " 2>/dev/null")
-  if not handle then
-    return {}
-  end
-
-  local current_link = vim.fn.resolve(sdkman_dir .. "/current")
-  local result = {}
-
-  for line in handle:lines() do
-    local name = vim.trim(line)
-    if name ~= "" and name ~= "current" then
-      local path = sdkman_dir .. "/" .. name
-      local major = name:match("^(%d+)%.") or name:match("^(%d+)$")
-      -- Normalizar java 8
-      if major == "1" then
-        major = "8"
-      end
-      table.insert(result, {
-        name = name,
-        major = major,
-        path = path,
-        is_current = (path == current_link),
-      })
-    end
-  end
-  handle:close()
-
-  -- Ordenar por versión major
-  table.sort(result, function(a, b)
-    return tonumber(a.major or 0) < tonumber(b.major or 0)
-  end)
-
-  return result
+  local sdkman = require("custom.java_sdkman")
+  return sdkman.list_javas()
 end
 
 -- ─── API pública ──────────────────────────────────────────────────────────────
