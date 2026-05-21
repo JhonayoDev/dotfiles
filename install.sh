@@ -65,8 +65,6 @@ stow_module() {
 
 profile_devbox() {
   info "Perfil: devbox (nvim + zsh)"
-  # OMZ, plugins y powerlevel10k ya están en la imagen base.
-  # Aquí solo aplicamos la configuración personal via stow.
 
   section "nvim"
   stow_module nvim
