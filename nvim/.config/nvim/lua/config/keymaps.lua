@@ -12,8 +12,13 @@ vim.keymap.set("n", "<leader>ft", function()
   templates.select_and_insert()
 end, { desc = "Insert Template" })
 
-vim.keymap.set("n", "<leader>fg", function()
+vim.keymap.set("n", "<leader>fC", function()
   templates.create_gitignore()
 end, { desc = "Create .gitignore" })
 
 vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]])
+
+vim.keymap.set("i", "<C-a>", "<Esc>A", { desc = "Ir al final de linea y seguir insertando" })
+vim.keymap.set("n", "<C-a>", "<Esc>A", { desc = "Ir al final de linea y seguir insertando" })
+
+vim.keymap.set("i", "jk", "<Esc>")
