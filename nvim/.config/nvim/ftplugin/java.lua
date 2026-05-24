@@ -167,16 +167,45 @@ local config = {
     -- ============================================================
     if dap_ok then
       -- Ejecutar Main Class con layout 2
-      vim.keymap.set("n", "<leader>cR", function()
-        local configs = dap.configurations.java
-        if configs and configs[3] then
-          dap.run(configs[3])
-          require("dapui").open({ layout = 2 })
-        else
-          dap.continue()
-          require("dapui").open({ layout = 2 })
-        end
-      end, vim.tbl_extend("force", opts, { desc = "Launch Main Class" }))
+      vim.keymap.set(
+        "n",
+        "<leader>cR",
+        function()
+          local dap = require("dap")
+          local env = require("utils.env").load_env()
+
+          vim.notify(".env cargado:\n" .. table.concat(vim.tbl_keys(env), "\n"), vim.log.levels.INFO)
+
+          local configs = dap.configurations.java
+
+          if configs and configs[3] then
+            local config = vim.deepcopy(configs[3])
+
+            config.env = vim.tbl_extend("force", config.env or {}, env)
+
+            dap.run(config)
+
+            require("dapui").open({ layout = 2 })
+          else
+            dap.continue()
+            require("dapui").open({ layout = 2 })
+          end
+        end,
+        vim.tbl_extend("force", opts, {
+          desc = "Launch Main Class with .env",
+        })
+      )
+
+      --      vim.keymap.set("n", "<leader>cR", function()
+      --        local configs = dap.configurations.java
+      --        if configs and configs[3] then
+      --          dap.run(configs[3])
+      --          require("dapui").open({ layout = 2 })
+      --        else
+      --          dap.continue()
+      --          require("dapui").open({ layout = 2 })
+      --        end
+      --      end, vim.tbl_extend("force", opts, { desc = "Launch Main Class" }))
 
       -- Toggle dapui (minimizar/maximizar)
       vim.keymap.set("n", "<leader>cx", function()
