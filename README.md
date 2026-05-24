@@ -669,3 +669,28 @@ devpod provider use docker
 ```bash
 devpod provider list
 ```
+
+#### instalacion pnpm
+
+```bash
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
+
+refrescar
+
+```bash
+source /home/jhonayo/.zshrc
+
+```
+
+verificar
+
+```bash
+pnpm --version
+```
+
+para el uso de dadbod ui en nvim despues de instalar pnpm intalar:
+
+```bash
+pnpm install -g @mermaid-js/mermaid-cli
+```

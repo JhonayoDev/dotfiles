@@ -287,3 +287,11 @@ export PATH="$HOME/.local/bin:$PATH"
 
 [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 alias lzd='lazydocker'
+
+# pnpm
+export PNPM_HOME="/home/jhonayo/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
