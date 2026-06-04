@@ -152,8 +152,8 @@ local config = {
     local wk_ok, wk = pcall(require, "which-key")
     if wk_ok then
       wk.add({
-        { "<leader>cT", group = "Test" },
-        { "<leader>cTd", group = "Dap" },
+        { "<leader>ct", group = "Test" },
+        { "<leader>ctd", group = "Dap" },
         { "<leader>ce", group = "Extract", buffer = bufnr },
       })
     end
@@ -230,12 +230,12 @@ local config = {
       -- ============================================================
       -- Test SIN debug (solo Console - layout 2)
       -- ============================================================
-      vim.keymap.set("n", "<leader>cTdc", function()
+      vim.keymap.set("n", "<leader>ctdc", function()
         require("jdtls.dap").test_class()
         require("dapui").open({ layout = 2 })
       end, vim.tbl_extend("force", opts, { desc = "Test Class (Console)" }))
 
-      vim.keymap.set("n", "<leader>cTdm", function()
+      vim.keymap.set("n", "<leader>ctdm", function()
         require("jdtls.dap").test_nearest_method()
         require("dapui").open({ layout = 2 })
       end, vim.tbl_extend("force", opts, { desc = "Test Method (Console)" }))
@@ -243,12 +243,12 @@ local config = {
       -- ============================================================
       -- Test CON debug (UI completa - ambos layouts)
       -- ============================================================
-      vim.keymap.set("n", "<leader>cTdC", function()
+      vim.keymap.set("n", "<leader>ctdC", function()
         require("jdtls.dap").test_class()
         require("dapui").open() -- Sin especificar layout = abre todo
       end, vim.tbl_extend("force", opts, { desc = "Debug Test Class (Full UI)" }))
 
-      vim.keymap.set("n", "<leader>cTdM", function()
+      vim.keymap.set("n", "<leader>ctdM", function()
         require("jdtls.dap").test_nearest_method()
         require("dapui").open() -- Sin especificar layout = abre todo
       end, vim.tbl_extend("force", opts, { desc = "Debug Test Method (Full UI)" }))
@@ -262,24 +262,24 @@ local config = {
     end, vim.tbl_extend("force", opts, { desc = "Java Environment" }))
 
     if ui_ok then
-      vim.keymap.set("n", "<leader>cTp", function()
+      vim.keymap.set("n", "<leader>ctp", function()
         test_ui.toggle()
       end, vim.tbl_extend("force", opts, { desc = "Toggle Test Panel" }))
 
-      vim.keymap.set("n", "<leader>cTx", function()
+      vim.keymap.set("n", "<leader>ctx", function()
         require("custom.test_runner").cancel()
         vim.notify("Ejecución cancelada", vim.log.levels.WARN)
       end, vim.tbl_extend("force", opts, { desc = "Cancel Run (Panel)" }))
 
-      vim.keymap.set("n", "<leader>cTc", function()
+      vim.keymap.set("n", "<leader>ctc", function()
         test_ui.run_class()
       end, vim.tbl_extend("force", opts, { desc = "Run Class (Panel)" }))
 
-      vim.keymap.set("n", "<leader>cTm", function()
+      vim.keymap.set("n", "<leader>ctm", function()
         test_ui.run_method()
       end, vim.tbl_extend("force", opts, { desc = "Run Method (Panel)" }))
 
-      vim.keymap.set("n", "<leader>cTa", function()
+      vim.keymap.set("n", "<leader>cta", function()
         test_ui.run_all()
       end, vim.tbl_extend("force", opts, { desc = "Run All (Panel)" }))
     end
