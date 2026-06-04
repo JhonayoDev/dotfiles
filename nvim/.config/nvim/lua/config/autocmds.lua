@@ -6,3 +6,8 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
+-- En tu config de keymaps o en un autocmd FileType markdown
+vim.keymap.set("n", "<CR>", function()
+  return vim.bo.filetype == "markdown" and require("obsidian").util.smart_action() or "<CR>"
+end, { expr = true, buffer = true })
