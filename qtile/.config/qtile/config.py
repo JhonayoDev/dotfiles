@@ -713,9 +713,30 @@ wl_input_rules = None
 @hook.subscribe.startup_once
 def autostart():
     # Se ejecuta UNA sola vez al iniciar (no en reloads con Super+Ctrl+R).
-    # El script configura xrandr y lanza picom, nm-applet, etc.
+    # Monitores ya configurados ANTES de Qtile vía start_qtile.sh -> monitors.sh
+    # Aquí solo daemons (picom, nm-applet, etc.)
     home = os.path.expanduser("~/.config/qtile/scripts/autostart.sh")
     subprocess.call([home])
+
+
+@hook.subscribe.screen_change
+def on_screen_change(event):
+    # Hotplug automático sin logout (2026-08-23).
+    # Sin --scale: 1 evento RandR → reconfiguración única.
+    # Evita el doble refresh que ocurría con --scale 1.12.
+    import time
+
+    # Pequeño debounce para que el DP/HDMI termine el handshake (MBP 2014)
+    time.sleep(0.4)
+    monitors = os.path.expanduser("~/.config/qtile/scripts/monitors.sh")
+    if not os.path.exists(monitors):
+        monitors = os.path.expanduser("~/dotfiles/scripts/monitors.sh")
+    subprocess.Popen(["bash", monitors])
+    # Qtile re-evalúa screens por reconfigure_screens=True; forzar reconfigure extra
+    try:
+        qtile.reconfigure_screens()
+    except Exception:
+        pass
 
 
 @hook.subscribe.startup_complete

@@ -1,26 +1,18 @@
 #!/bin/bash
+# start_qtile.sh — wrapper para GDM: configura monitores ANTES de Qtile
+# Fuente única: ~/.config/qtile/scripts/monitors.sh (sin --scale, 1 evento RandR)
 
-# Configurar monitores ANTES de que Qtile arranque
-INTERNAL="eDP-1"
-EXT1="HDMI-1"
-EXT2="HDMI-2"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MONITORS_SCRIPT="$SCRIPT_DIR/monitors.sh"
 
-EXT1_ON=$(xrandr | grep "^$EXT1 connected")
-EXT2_ON=$(xrandr | grep "^$EXT2 connected")
+# Fallback a dotfiles/scripts si no existe en config
+if [ ! -x "$MONITORS_SCRIPT" ]; then
+    MONITORS_SCRIPT="/home/jhonayo/dotfiles/scripts/monitors.sh"
+fi
 
-if [ -n "$EXT1_ON" ] && [ -n "$EXT2_ON" ]; then
-    xrandr --output $INTERNAL --off \
-           --output $EXT2 --auto \
-           --output $EXT1 --auto --primary --right-of $EXT2
-elif [ -n "$EXT1_ON" ]; then
-    xrandr --output $INTERNAL --off \
-           --output $EXT1 --auto --primary
-elif [ -n "$EXT2_ON" ]; then
-    xrandr --output $INTERNAL --off \
-           --output $EXT2 --auto --primary
-else
-    xrandr --output $INTERNAL --mode 1920x1200 --primary
+if [ -x "$MONITORS_SCRIPT" ]; then
+    bash "$MONITORS_SCRIPT"
 fi
 
 # Arrancar Qtile
-exec qtile start
+exec /home/jhonayo/.local/bin/qtile start

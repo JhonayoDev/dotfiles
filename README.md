@@ -338,23 +338,45 @@ pip install qtile --break-system-packages
 ```
 
 Registrar Qtile como sesión en GDM
-Después de instalarlo hay que decirle a GDM que existe:
+Después de instalarlo hay que decirle a GDM que existe. **Este paso es manual y obligatorio en cada clean install** — `stow` no puede hacerlo porque `/usr/share/xsessions` está fuera de `$HOME` (no es parte de `install.sh` que usas para devcontainer):
 
 ```bash
-
 sudo nano /usr/share/xsessions/qtile.desktop
 ```
 
-pegar:
+pegar **exactamente** esto (actualizado 2026-08-23 — ver “Decisión monitores” abajo para el POR QUÉ):
 
 ```bash
 [Desktop Entry]
 Name=Qtile
 Comment=Qtile Window Manager
-Exec=/home/jhonayo/.local/bin/qtile start
+Exec=/home/jhonayo/.config/qtile/scripts/start_qtile.sh
 Type=Application
 Keywords=wm;tiling
 ```
+
+> [!IMPORTANT]
+> **POR QUÉ `Exec` debe ser `start_qtile.sh` y NO `/home/jhonayo/.local/bin/qtile start`:**
+> * `start_qtile.sh` ejecuta `~/.config/qtile/scripts/monitors.sh` **ANTES** de que Qtile arranque. Así `config.py:111 get_num_monitors()` ya ve los 2 HDMI y `screens:653` nace correcto (1 solo evento RandR).
+> * Si apuntas directo a `qtile start`, el `xrandr` se haría **después** vía `autostart.sh` (hook `startup_once:713`). Eso provocaba el bug histórico: barra “mal” al iniciar y luego se corregía con un refresco tardío + obligaba a cerrar sesión para hotplug. Fue lo que se arregló el 2026-08-23.
+> * Antes existía también `--scale 1.12` en `monitors.sh` que causaba un **doble refresh** (mode + scale = 2 eventos RandR). Se eliminó a propósito — se prioriza velocidad sobre uniformidad de tamaño entre monitores (ver sección “Decisión monitores”).
+> * Si en el futuro migras de PC y olvidas este paso, el síntoma volverá: arranque lento + barra que parpadea. Verifica con `cat /usr/share/xsessions/qtile.desktop` que `Exec` apunte al wrapper.
+
+Comando idempotente para replicar sin editor (útil para pegar directo):
+
+```bash
+sudo install -Dm644 /dev/stdin /usr/share/xsessions/qtile.desktop <<'EOF'
+[Desktop Entry]
+Name=Qtile
+Comment=Qtile Window Manager
+Exec=/home/jhonayo/.config/qtile/scripts/start_qtile.sh
+Type=Application
+Keywords=wm;tiling
+EOF
+cat /usr/share/xsessions/qtile.desktop
+```
+
+> Nota: también se deja una copia en `~/.local/share/xsessions/qtile.desktop` para referencia, pero **GDM en Ubuntu solo lee `/usr/share/xsessions`** — esa copia no sustituye el paso con `sudo`.
 
 incorporar en el PATH
 
@@ -393,6 +415,24 @@ verificar sysmlinks
 > ```bash
 > python3 -c "import ast; ast.parse(open('/home/jhonayo/dotfiles/qtile/.config/qtile/config.py').read()); print('✓ Sintaxis OK')"
 > ```
+
+##### Decisión monitores 2026-08-23 — fix arranque lento y hotplug (MacBook Pro 2014, 2x HDMI vía Mini-DP)
+
+**Problema:** Al iniciar con 2 monitores había un refresco tardío — la barra aparecía mal y luego se corregía. Conectar/desconectar un HDMI después de encendido no funcionaba sin cerrar sesión.
+
+**Causa raíz auditada:**
+* `config.py:111` calcula `NUM_MONITORS` una sola vez al importar; luego `autostart.sh` hacía `xrandr --auto` **después** de Qtile → `reconfigure_screens=True` disparaba una segunda reconfiguración (flicker).
+* Había 3 scripts duplicados: `qtile/scripts/autostart.sh` (activo), `qtile/scripts/start_qtile.sh` (no usado), `scripts/monitors.sh` (huérfano y con `--scale 1.12`).
+* El `--scale 1.12` provocaba **doble refresh** (mode + scale = 2 eventos RandR), por eso se había removido previamente y se toleraba la diferencia de tamaño entre monitores.
+
+**Decisión tomada:**
+* **Sin escala** (`--scale` omitido): 1 solo evento RandR → arranque rápido, sin doble reconfig. Se prioriza velocidad sobre uniformidad perfecta (diferencia leve de tamaño entre HDMI-1 SAM y HDMI-2 LEN se tolera).
+* Fuente única: `qtile/.config/qtile/scripts/monitors.sh` (también espejado en `scripts/monitors.sh`) — sin `--scale`, con `--mode 1920x1080 --pos 0x0` explícito. `start_qtile.sh` lo ejecuta **antes** de `qtile start` (ver `Exec` arriba).
+* `autostart.sh` ya no contiene `xrandr`; solo daemons (`picom`, `polkit`, `nm-applet`, etc.).
+* Hotplug automático: nuevo hook `@hook.subscribe.screen_change` en `config.py:721` con debounce 0.4s que relanza `monitors.sh` y `qtile.reconfigure_screens()` — ya no hace falta cerrar sesión.
+* `monitors.xml` de GNOME se mantiene pero no manda en Qtile; no se usan `autorandr`/`arandr`/`xfce4-display-settings` (no instalados). Si se requieren apps XFCE/GNOME, usarlas solo como editor visual y copiar el comando a `monitors.sh`.
+
+**Para revertir a escala:** ver comentario al final de `monitors.sh` (`--scale 1.12x1.12`) — reactivarlo reintroduce el doble refresh.
 
 ##### configuracion adicionar qtile
 

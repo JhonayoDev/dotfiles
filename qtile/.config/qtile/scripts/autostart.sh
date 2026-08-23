@@ -1,22 +1,8 @@
 #!/bin/bash
-INTERNAL="eDP-1"
-EXT1="HDMI-1"
-EXT2="HDMI-2"
-EXT1_ON=$(xrandr | grep "^$EXT1 connected")
-EXT2_ON=$(xrandr | grep "^$EXT2 connected")
-if [ -n "$EXT1_ON" ] && [ -n "$EXT2_ON" ]; then
-  xrandr --output $INTERNAL --off \
-    --output $EXT2 --auto \
-    --output $EXT1 --auto --primary --right-of $EXT2
-elif [ -n "$EXT1_ON" ]; then
-  xrandr --output $INTERNAL --off \
-    --output $EXT1 --auto --primary
-elif [ -n "$EXT2_ON" ]; then
-  xrandr --output $INTERNAL --off \
-    --output $EXT2 --auto --primary
-else
-  xrandr --output $INTERNAL --mode 1920x1200 --primary
-fi
+# autostart.sh — daemons de sesión Qtile
+# Nota: la configuración de monitores ya no está aquí.
+# Ahora se hace ANTES de Qtile vía start_qtile.sh -> monitors.sh (sin --scale, 1 evento RandR)
+# Esto evita el doble refresh (barra mal → corrige) y el delay de --scale 1.12
 
 picom --daemon &
 /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &

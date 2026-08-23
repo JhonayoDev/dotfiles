@@ -166,46 +166,90 @@ local config = {
     -- DAP: Ejecutar directamente la 3ra configuración (main class)
     -- ============================================================
     if dap_ok then
-      -- Ejecutar Main Class con layout 2
-      vim.keymap.set(
-        "n",
-        "<leader>cR",
-        function()
-          local dap = require("dap")
-          local env = require("utils.env").load_env()
+      local function run_config(config, env)
+        config = vim.deepcopy(config)
+        config.env = vim.tbl_extend("force", config.env or {}, env)
+        dap.run(config)
+        require("dapui").open({ layout = 2 })
+      end
 
-          vim.notify(".env cargado:\n" .. table.concat(vim.tbl_keys(env), "\n"), vim.log.levels.INFO)
+      local function get_launch_configs()
+        return vim.tbl_filter(function(c)
+          return c.request == "launch" and c.name ~= "Debug (Launch) - Current File"
+        end, dap.configurations.java or {})
+      end
 
-          local configs = dap.configurations.java
-
-          if configs and configs[3] then
-            local config = vim.deepcopy(configs[3])
-
-            config.env = vim.tbl_extend("force", config.env or {}, env)
-
-            dap.run(config)
-
-            require("dapui").open({ layout = 2 })
-          else
-            dap.continue()
-            require("dapui").open({ layout = 2 })
+      local function pick_and_run(configs, env)
+        vim.ui.select(configs, {
+          prompt = "Seleccioná la configuración para ejecutar con .env:",
+          format_item = function(c)
+            return c.name
+          end,
+        }, function(choice)
+          if not choice then
+            return
           end
-        end,
-        vim.tbl_extend("force", opts, {
-          desc = "Launch Main Class with .env",
-        })
-      )
+          local ok, persist = pcall(require, "utils.dap_persist")
+          if ok then
+            persist.save(choice.name)
+          end
+          run_config(choice, env)
+        end)
+      end
 
-      --      vim.keymap.set("n", "<leader>cR", function()
-      --        local configs = dap.configurations.java
-      --        if configs and configs[3] then
-      --          dap.run(configs[3])
-      --          require("dapui").open({ layout = 2 })
-      --        else
-      --          dap.continue()
-      --          require("dapui").open({ layout = 2 })
-      --        end
-      --      end, vim.tbl_extend("force", opts, { desc = "Launch Main Class" }))
+      -- <leader>cR: usa la guardada si existe, si no abre picker
+      vim.keymap.set("n", "<leader>cRR", function()
+        local ok_env, env_mod = pcall(require, "utils.env")
+        if not ok_env then
+          vim.notify("utils.env no disponible", vim.log.levels.ERROR)
+          return
+        end
+        local env = env_mod.load_env()
+
+        local configs = get_launch_configs()
+        if #configs == 0 then
+          vim.notify("No se encontraron main classes", vim.log.levels.WARN)
+          return
+        end
+
+        if #configs == 1 then
+          run_config(configs[1], env)
+          return
+        end
+
+        local ok_persist, persist = pcall(require, "utils.dap_persist")
+        if ok_persist then
+          local saved = persist.load()
+          if saved then
+            for _, c in ipairs(configs) do
+              if c.name == saved then
+                run_config(c, env)
+                return
+              end
+            end
+          end
+        end
+
+        pick_and_run(configs, env)
+      end, vim.tbl_extend("force", opts, { desc = "Launch Main Class with .env" }))
+
+      -- <leader>cRS: fuerza el picker para cambiar de main class
+      vim.keymap.set("n", "<leader>cRS", function()
+        local ok_env, env_mod = pcall(require, "utils.env")
+        if not ok_env then
+          vim.notify("utils.env no disponible", vim.log.levels.ERROR)
+          return
+        end
+        local env = env_mod.load_env()
+
+        local configs = get_launch_configs()
+        if #configs == 0 then
+          vim.notify("No se encontraron main classes", vim.log.levels.WARN)
+          return
+        end
+
+        pick_and_run(configs, env)
+      end, vim.tbl_extend("force", opts, { desc = "Launch Main Class (force picker)" }))
 
       -- Toggle dapui (minimizar/maximizar)
       vim.keymap.set("n", "<leader>cx", function()
