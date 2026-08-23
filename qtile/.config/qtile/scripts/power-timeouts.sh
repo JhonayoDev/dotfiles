@@ -1,68 +1,147 @@
 #!/bin/bash
-# power-timeouts.sh — ajusta tiempos de apagado pantalla / bloqueo / suspensión
-# Uso: power-timeouts.sh [show|short|long|custom <sec>|off]
-#  show   → muestra estado actual
-#  short  → 5 min pantalla, 10 min suspensión
-#  long   → 30 min pantalla, 1h suspensión (para procesos largos)
-#  custom <sec> → pantalla <sec>, suspensión <sec*2>
-#  off    → desactiva suspensión (útil para procesos largos, como pides)
-# Afecta: gsettings idle-delay, DPMS (xset), y systemd sleep-inactive
+# power-timeouts.sh — fuente única para tiempos de pantalla y suspensión
+# Ajusta pantalla (idle-delay + DPMS xset) y suspensión (GNOME power) por separado
+# Sin bloqueo automático: solo manual via Power → Bloquear (xss-lock → i3lock-color)
+# Uso: power-timeouts.sh [show|screen <sec|0|never>|suspend <sec|0|never>|short|long|off]
+#  show              → muestra estado
+#  screen <sec|0>    → pantalla <sec> (0 = nunca), DPMS sincronizado
+#  suspend <sec|0>   → suspensión <sec> (0 = nunca), tipo suspend/nothing
+#  short/long/off    → compatibilidad (mapea a presets antiguos)
+# Defaults: pantalla 5 min (300), suspensión 15 min (900) — se persiste en ~/.config/qtile/power.conf
 
 set -e
+CONF="$HOME/.config/qtile/power.conf"
+mkdir -p "$(dirname "$CONF")"
 
-show_status() {
-    echo "=== Estado actual ==="
-    echo -n "GNOME idle-delay (pantalla): "; gsettings get org.gnome.desktop.session idle-delay
-    echo -n "DPMS Standby/Suspend/Off: "; xset q | grep -A1 "DPMS" | tr -d '\n'; echo
-    echo -n "Screensaver lock: "; gsettings get org.gnome.desktop.screensaver lock-enabled; echo " (xss-lock maneja i3lock)"
-    echo -n "Power sleep-inactive-ac-type: "; gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type
-    echo -n "Power sleep-inactive-ac-timeout: "; gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout
-    echo
-    echo "Bloqueo manual: Control Center → Power → Bloquear (loginctl lock-session → xss-lock → i3lock)"
-    echo "Para auto-bloqueo futuro: xss-lock + xautolock (no activo por ahora, solo manual)"
+# Carga o crea defaults 5m/15m
+if [ ! -f "$CONF" ]; then
+    echo "SCREEN_SEC=300" > "$CONF"
+    echo "SUSPEND_SEC=900" >> "$CONF"
+    echo "SUSPEND_TYPE=suspend" >> "$CONF"
+fi
+# shellcheck source=/dev/null
+source "$CONF" 2>/dev/null || true
+SCREEN_SEC=${SCREEN_SEC:-300}
+SUSPEND_SEC=${SUSPEND_SEC:-900}
+SUSPEND_TYPE=${SUSPEND_TYPE:-suspend}
+
+save_conf() {
+    echo "SCREEN_SEC=$SCREEN_SEC" > "$CONF"
+    echo "SUSPEND_SEC=$SUSPEND_SEC" >> "$CONF"
+    echo "SUSPEND_TYPE=$SUSPEND_TYPE" >> "$CONF"
 }
 
-set_timeouts() {
-    local screen_sec=$1
-    local suspend_sec=$2
-    local suspend_type=$3  # 'nothing' o 'suspend'
-    echo "→ Pantalla: ${screen_sec}s, Suspensión: ${suspend_type} ${suspend_sec}s"
-    gsettings set org.gnome.desktop.session idle-delay "uint32 $screen_sec"
-    gsettings set org.gnome.desktop.screensaver idle-activation-enabled true
-    gsettings set org.gnome.desktop.screensaver lock-enabled true
-    # DPMS xset (Standby/Suspend/Off iguales)
-    xset s "$screen_sec" "$screen_sec"
-    xset dpms "$screen_sec" "$screen_sec" "$screen_sec"
-    # systemd/GNOME power: suspensión tras inactividad
-    gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type "'$suspend_type'"
-    gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout "$suspend_sec"
-    notify-send "⏱ Tiempos ajustados" "Pantalla ${screen_sec}s • Suspensión ${suspend_type} ${suspend_sec}s" -t 2000
+fmt_time() {
+    local s=$1
+    if [ "$s" -eq 0 ] 2>/dev/null; then echo "Nunca"; return; fi
+    if [ "$s" -lt 60 ]; then echo "${s}s"; elif [ $((s % 60)) -eq 0 ]; then echo "$((s/60)) min"; else echo "$((s/60))m $((s%60))s"; fi
+}
+
+show_status() {
+    echo "=== Estado actual (fuente: $CONF) ==="
+    echo "Pantalla: $(fmt_time "$SCREEN_SEC")  (idle-delay + DPMS)"
+    if [ "$SUSPEND_SEC" -eq 0 ] 2>/dev/null || [ "$SUSPEND_TYPE" = "nothing" ]; then
+        echo "Suspensión: Nunca"
+    else
+        echo "Suspensión: $(fmt_time "$SUSPEND_SEC") (suspend)"
+    fi
+    echo
+    echo -n "GNOME idle-delay: "; gsettings get org.gnome.desktop.session idle-delay 2>&1 | cat
+    echo -n "DPMS: "; xset q 2>&1 | grep -A1 "DPMS" | tr -d '\n' | cat; echo
+    echo -n "sleep-inactive-ac-type: "; gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 2>&1 | cat
+    echo -n "sleep-inactive-ac-timeout: "; gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 2>&1 | cat
+    echo "xss-lock: $(pgrep -x xss-lock >/dev/null 2>&1 && echo "activo (bloqueo en suspend)" || echo "inactivo")"
+}
+
+apply_screen() {
+    local sec=$1
+    if [ "$sec" = "0" ] || [ "$sec" = "never" ] || [ "$sec" = "Nunca" ]; then
+        sec=0
+    fi
+    SCREEN_SEC=$sec
+    save_conf
+    if [ "$sec" -eq 0 ] 2>/dev/null; then
+        echo "→ Pantalla: Nunca"
+        gsettings set org.gnome.desktop.session idle-delay "uint32 0" 2>&1 | cat
+        gsettings set org.gnome.desktop.screensaver idle-activation-enabled false 2>&1 | cat || true
+        xset s off 2>&1 | cat || true
+        xset s noblank 2>&1 | cat || true
+        xset -dpms 2>&1 | cat || true
+        notify-send "🖥 Pantalla: Nunca" "No se apagará sola" -t 2000 2>/dev/null || true
+    else
+        echo "→ Pantalla: $(fmt_time "$sec")"
+        gsettings set org.gnome.desktop.session idle-delay "uint32 $sec" 2>&1 | cat
+        gsettings set org.gnome.desktop.screensaver idle-activation-enabled true 2>&1 | cat || true
+        gsettings set org.gnome.desktop.screensaver lock-enabled true 2>&1 | cat || true
+        xset s "$sec" "$sec" 2>&1 | cat || true
+        xset dpms "$sec" "$sec" "$sec" 2>&1 | cat || true
+        xset +dpms 2>&1 | cat || true
+        xset s blank 2>&1 | cat || true
+        notify-send "🖥 Pantalla: $(fmt_time "$sec")" "Apagado tras $(fmt_time "$sec")" -t 2000 2>/dev/null || true
+    fi
+}
+
+apply_suspend() {
+    local sec=$1
+    if [ "$sec" = "0" ] || [ "$sec" = "never" ] || [ "$sec" = "Nunca" ]; then
+        sec=0
+        SUSPEND_SEC=0
+        SUSPEND_TYPE=nothing
+        save_conf
+        echo "→ Suspensión: Nunca"
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type "'nothing'" 2>&1 | cat
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 0 2>&1 | cat
+        notify-send "💤 Suspensión: Nunca" "No suspenderá sola" -t 2000 2>/dev/null || true
+    else
+        SUSPEND_SEC=$sec
+        SUSPEND_TYPE=suspend
+        save_conf
+        echo "→ Suspensión: $(fmt_time "$sec")"
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type "'suspend'" 2>&1 | cat
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout "$sec" 2>&1 | cat
+        notify-send "💤 Suspensión: $(fmt_time "$sec")" "Suspenderá tras $(fmt_time "$sec")" -t 2000 2>/dev/null || true
+    fi
+}
+
+# Aplica ambos al iniciar (para alinear tras login)
+apply_all() {
+    apply_screen "$SCREEN_SEC" >/dev/null 2>&1 || true
+    apply_suspend "$SUSPEND_SEC" >/dev/null 2>&1 || true
 }
 
 case "$1" in
     show|"")
         show_status
         ;;
+    screen)
+        if [ -z "$2" ]; then echo "Uso: $0 screen <segundos|0|never>"; exit 1; fi
+        apply_screen "$2"
+        ;;
+    suspend)
+        if [ -z "$2" ]; then echo "Uso: $0 suspend <segundos|0|never>"; exit 1; fi
+        apply_suspend "$2"
+        ;;
+    apply-all)
+        apply_all
+        ;;
     short)
-        set_timeouts 300 600 nothing  # 5 min pantalla, sin suspensión (seguro para procesos)
+        apply_screen 300; apply_suspend 0
         ;;
     long)
-        set_timeouts 1800 3600 nothing  # 30 min / sin suspensión
+        apply_screen 1800; apply_suspend 0
         ;;
     off)
-        set_timeouts 600 0 nothing
-        echo "Suspensión desactivada (ideal para procesos largos)"
+        apply_screen 0; apply_suspend 0
+        ;;
+    suspend-on)
+        apply_suspend 900
         ;;
     custom)
         if [ -z "$2" ]; then echo "Uso: $0 custom <segundos>"; exit 1; fi
-        set_timeouts "$2" $(( $2 * 2 )) nothing
-        ;;
-    suspend-on)
-        # activa suspensión (si quieres que sí suspenda)
-        set_timeouts 600 1800 suspend
+        apply_screen "$2"; apply_suspend $(( $2 * 3 ))
         ;;
     *)
-        echo "Uso: $0 [show|short|long|off|custom <sec>|suspend-on]"
+        echo "Uso: $0 [show|screen <sec|0>|suspend <sec|0>|apply-all|short|long|off]"
         exit 1
         ;;
 esac

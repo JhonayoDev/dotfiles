@@ -76,3 +76,4 @@ bookmarks
 *.original
 *.backup
 *.old
+qtile/.config/qtile/power.conf

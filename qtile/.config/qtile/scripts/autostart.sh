@@ -32,6 +32,17 @@ else
         python3 "$HOME/dotfiles/scripts/mouse-buttons.py" &
     fi
 fi
+# Tiempos pantalla/suspensión — fuente única ~/.config/qtile/power.conf (default 5m/15m)
+# Alinea gsettings idle-delay, xset s/dpms y GNOME sleep-inactive al login
+if [ -x "$HOME/.config/qtile/scripts/power-timeouts.sh" ]; then
+    "$HOME/.config/qtile/scripts/power-timeouts.sh" apply-all &
+fi
+
+# Al despertar de suspend: restaura DPMS y monitores (Ubuntu GNOME-like)
+# xss-lock --transfer-sleep-lock ya bloquea antes de suspend; aquí aseguramos resume
+# Hook systemd-sleep no necesario: Qtile screen_change + DPMS se restauran solos, pero forzamos
+(sleep 2; xset dpms force on 2>/dev/null || true; "$HOME/.config/qtile/scripts/monitors.sh" 2>/dev/null || true) &
+
 # Locker: i3lock-color (barra + blur + hora grande) — Power → Bloquear llama directo a lock.sh
 # xss-lock queda como puente para `loginctl lock-session` y suspensiones (usa lock.sh que ahora es i3lock-color)
 if command -v xss-lock >/dev/null 2>&1; then
