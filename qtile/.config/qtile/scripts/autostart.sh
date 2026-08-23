@@ -17,8 +17,20 @@ gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 export GTK_THEME=Adwaita-dark
 xsettingsd &
-# Mouse buttons
-pkill -f mouse-buttons.py 2>/dev/null
-python3 "/home/jhonayo/dotfiles/scripts/mouse-buttons.py" &
+# Mouse buttons — ahora systemd --user para sobrevivir DPMS 600s/Bluetooth (ver services/mouse-buttons.service)
+# Fallback si el servicio no está habilitado (fresh install sin enable)
+if systemctl --user is-active --quiet mouse-buttons.service 2>/dev/null; then
+    systemctl --user try-restart mouse-buttons.service 2>/dev/null || true
+else
+    # intenta iniciar servicio; si no existe, lanza directo (compatibilidad)
+    if [ -f "$HOME/.config/systemd/user/mouse-buttons.service" ] || [ -f "$HOME/dotfiles/services/mouse-buttons.service" ]; then
+        mkdir -p "$HOME/.config/systemd/user"
+        cp -f "$HOME/dotfiles/services/mouse-buttons.service" "$HOME/.config/systemd/user/mouse-buttons.service" 2>/dev/null || true
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now mouse-buttons.service 2>/dev/null || python3 "$HOME/dotfiles/scripts/mouse-buttons.py" &
+    else
+        python3 "$HOME/dotfiles/scripts/mouse-buttons.py" &
+    fi
+fi
 python3 "/home/jhonayo/dotfiles/scripts/apply-theme.py" &
 dunst &

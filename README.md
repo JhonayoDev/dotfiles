@@ -582,19 +582,58 @@ probar la instalación
 rofi -show drun -theme ~/.config/rofi/themes/control-center.rasi
 ```
 
-#### control volumen logi
+#### control logitech MX Master 3S por Bluetooth (botones extra estables)
 
+> [!IMPORTANT]
+> **Reproducible en cada clean install / cambio de PC** — el mouse va por Bluetooth y antes moría tras `DPMS 600s` (pantalla apagada 10 min) y requería logout. Ahora es un servicio `systemd --user` que sobrevive a `DPMS Off`, `suspend` y cambios de `id` `bcm5974/Logitech`.
+
+**Pair Bluetooth (una vez):**
+```bash
+bluetoothctl
+scan on
+pair <MAC>  # MAC de Logitech MX Master 3S
+trust <MAC>
+connect <MAC>
+exit
+# Opcional para que no se desconecte tras DPMS (mantiene conexión, poco impacto batería):
+# sudo nano /etc/bluetooth/main.conf -> IdleTimeout=0
+```
+
+**Dependencias y permisos (reproducible):**
 ```bash
 ls /dev/input/by-id/
 python3 -m evdev 2>/dev/null || sudo apt install python3-evdev -y
-sudo usermod -aG input $USER
-
+sudo usermod -aG input $USER  # relogin necesario
+# ya tienes: sudo usermod -aG input $USER (para evdev /dev/input/event*)
 ```
 
-- permisos de ejecucion al script de control de mouse
-
+**Instalación reproducible del servicio (versionado en dotfiles):**
 ```bash
 chmod +x ~/dotfiles/scripts/mouse-buttons.py
+chmod +x ~/dotfiles/services/mouse-buttons.service  # si existe
+
+mkdir -p ~/.config/systemd/user
+cp ~/dotfiles/services/mouse-buttons.service ~/.config/systemd/user/mouse-buttons.service
+systemctl --user daemon-reload
+systemctl --user enable --now mouse-buttons.service
+
+# Verificación
+systemctl --user status mouse-buttons.service
+journalctl --user -u mouse-buttons.service -f  # logs con [OK]/[WARN]
+xinput list --id-only "Logitech MX Master 3S"  # debe dar id (ej 10)
+python3 ~/dotfiles/scripts/mouse-buttons.py  # test directo sin servicio
+```
+
+**Qué hace el servicio:**
+* `services/mouse-buttons.service:1` `Restart=always RestartSec=2` — nunca queda muerto tras `DPMS Off 600`/`suspend`/Bluetooth powersave. Antes `scripts/mouse-buttons.py:24` tenía `MAX_RETRIES 20` y `sys.exit(1)`; ahora es infinito con `RETRY_DELAY 2` y reaplica `xinput set-button-map` tras reconexión (X resetea el mapa tras `DPMS Off`).
+* `qtile/.config/qtile/scripts/autostart.sh:20` ahora hace `systemctl --user try-restart mouse-buttons.service` si existe, con fallback a `python3 ... &` si es fresh install sin `enable`. No más `pkill` huérfano.
+* Si en futuro no quieres systemd, `autostart.sh` aún lanza directo y el script ya es estable (bucle infinito, no muere).
+
+**Debug sin logout:**
+```bash
+systemctl --user restart mouse-buttons.service
+xinput list-props "Logitech MX Master 3S" | grep "Device Enabled"
+journalctl --user -u mouse-buttons.service --since "5 min ago"
 ```
 
 #### aplicar thema al sistema

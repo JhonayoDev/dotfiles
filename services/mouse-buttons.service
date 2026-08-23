@@ -1,0 +1,19 @@
+[Unit]
+Description=Logitech MX Master 3S extra buttons (Bluetooth, evdev)
+Documentation=https://github.com/anomalyco/opencode
+After=graphical-session.target bluetooth.target
+PartOf=graphical-session.target
+Wants=bluetooth.target
+
+[Service]
+Type=simple
+ExecStart=%h/dotfiles/scripts/mouse-buttons.py
+Restart=always
+RestartSec=2
+Environment=DISPLAY=:0
+# Para que journalctl --user lo capture con flush
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
