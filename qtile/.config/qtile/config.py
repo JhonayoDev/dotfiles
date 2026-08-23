@@ -259,6 +259,12 @@ def open_launcher():
     qtile.spawn(f"rofi -show drun -theme {ROFI_THEME}")
 
 
+def open_keyhelp():
+    # Opción A: ventana flotante rofi con atajos (keyhelp.sh + keyhelp.rasi)
+    # Click derecho en astronauta → rofi -dmenu centrado 700px
+    qtile.spawn(os.path.expanduser("~/.config/qtile/scripts/keyhelp.sh"))
+
+
 def open_info():
     qtile.spawn("/home/jhonayo/.config/rofi/scripts/control_center.sh")
 
@@ -283,7 +289,7 @@ def make_bar_primary():
                 background=colors["fg0"],
                 mouse_callbacks={
                     "Button1": open_launcher,
-                    "Button3": show_keybindings_help,
+                    "Button3": open_keyhelp,
                 },
             ),
             widget.Image(

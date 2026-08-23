@@ -151,6 +151,15 @@ def make_keys(
             lazy.spawn("flameshot full -c -p /home/jhonayo/Pictures/"),
             desc="Screenshot completo",
         ),
+        # ── Ayuda ───────────────────────────────────────────────
+        # Super + i → ventana flotante de atajos (misma que click derecho en 󰏆)
+        # Antes se probó Super+? (question/slash) pero fallaba según layout ES/US
+        Key(
+            [mod],
+            "i",
+            lazy.spawn(f"{SCRIPTS}/keyhelp.sh"),
+            desc="Mostrar atajos (help)",
+        ),
     ]
 
     # Keybinds para grupos

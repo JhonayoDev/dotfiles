@@ -1,36 +1,84 @@
 @import "colors.rasi"
 
+/* keyhelp.rasi — ventana flotante de atajos, alineada a menu-apps.rasi */
+/* Usa mismos colores que menu-apps (colors.rasi generado por apply-theme.py) */
+
 window {
     location: center;
-    width: 700px;
+    width: 750px;
     border-radius: 16px;
     border: 3px;
-    border-color: @accent;
+    border-color: @bg2;
 }
 
 mainbox {
-    padding: 20px;
+    padding: 16px;
+    spacing: 12px;
     background-color: @bg1;
 }
 
+inputbar {
+    background-color: @bg2;
+    border-radius: 10px;
+    border: 2px;
+    border-color: @fg2;
+    padding: 10px 16px;
+    spacing: 10px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color: @fg0;
+}
+
+entry {
+    placeholder: "Filtrar atajos...";
+    placeholder-color: @fg0;
+    text-color: @fg1;
+    background-color: transparent;
+}
+
 listview {
+    background-color: transparent;
+    margin: 8px 0 0;
+    lines: 18;
     columns: 1;
-    lines: 20;
-    spacing: 6px;
-    fixed-height: true;
+    fixed-height: false;
+    spacing: 4px;
 }
 
 element {
-    padding: 6px 10px;
+    padding: 10px 14px;
+    spacing: 12px;
     border-radius: 10px;
+    orientation: horizontal;
+    children: [ element-text ];
     background-color: transparent;
+    border: 2px;
+    border-color: @fg2;
 }
 
 element selected {
     background-color: @bg2;
+    text-color: @fg0;
 }
 
 element-text {
-    font: "JetBrainsMono Nerd Font 12";
+    vertical-align: 0.5;
+    background-color: transparent;
     text-color: @fg0;
+    font: "JetBrainsMono Nerd Font 11";
+}
+
+message {
+    margin: 8px 0 0;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+textbox {
+    padding: 8px 14px;
+    text-color: @fg0;
+    background-color: transparent;
 }
