@@ -518,6 +518,64 @@ sudo usermod -aG video $USER
   >
   > También se añadió backlight teclado `F5/F6` (`XF86KbdBrightness*` → `kbd-backlight.sh`) sin `Fn`, sin auto (ver `qtile/.config/qtile/scripts/kbd-backlight.sh`).
 
+#### Sistema de bloqueo y control de energía (i3lock-color + xss-lock + timeouts configurables)
+
+> Sistema completo: bloqueo con **barra horizontal + blur + hora grande** (`HH:MM` fila 1 grande, `usuario@host` fila 2 pequeño) desde `Control Center → Power → Bloquear`, fondo del tema y tiempos ajustables para procesos largos. Todo versionado en `dotfiles`.
+
+**Instalación (ya la hiciste, para reproducir en clean install):**
+```bash
+sudo apt install -y xss-lock mpv  # xss-lock puente logind → locker para `loginctl lock-session` y suspensiones
+# i3lock-color no está en apt → compilar:
+sudo apt install -y autoconf gcc make pkg-config libpam0g-dev libcairo2-dev libfontconfig1-dev libxcb-composite0-dev libev-dev libx11-xcb-dev libxcb-xkb-dev libxcb-xinerama0-dev libxcb-randr0-dev libxcb-image0-dev libxcb-util-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev libjpeg-dev libgif-dev
+git clone https://github.com/Raymo111/i3lock-color /tmp/i3lock-color
+cd /tmp/i3lock-color && ./install-i3lock-color.sh  # → /usr/bin/i3lock con bar-indicator + blur
+# lock.sh detecta /usr/bin/i3lock con bar-indicator y usa: --bar-indicator --blur 7 --time-size 78 --greeter-text "$USER@$HOST"
+```
+
+**Migración desde xsecurelock/mpv (si vienes de la etapa anterior):**
+```bash
+sudo apt remove --autoremove xsecurelock mpv  # lock.sh ahora usa i3lock-color; xsecurelock queda como fallback si lo dejas
+# Mantén xss-lock aunque uses i3lock-color, porque xss-lock hace que `loginctl lock-session` y `suspend` disparen lock.sh
+```
+
+**Bloqueo manual (solo cuando lo ejecutes tú, sin auto por ahora):**
+* `Control Center → Power → Bloquear` hace `loginctl lock-session` (`rofi/scripts/system/power.sh:23`).
+* `xss-lock` lo captura y lanza `qtile/.config/qtile/scripts/lock.sh` (añadido en `autostart.sh:20`):
+  ```bash
+  xss-lock --transfer-sleep-lock -- ~/.config/qtile/scripts/lock.sh &
+  ```
+* `lock.sh` usa el mismo wallpaper que `theme.py:6 wallpapers["primary"]` (`~/.config/qtile/Wallpaper/the-milky-way.jpeg`) con `--image --tiling` y colores `bg1/accent` de `colors.rasi` (generado por `apply-theme.py`). Para personalizar después, cambia `wallpapers["primary"]` en `theme.py:6` o edita `WALLPAPER` en `lock.sh:8`.
+
+**Verificación:**
+```bash
+loginctl lock-session  # o Control Center → Bloquear
+# debe aparecer i3lock con fondo y reloj %H:%M
+ps aux | grep xss-lock
+```
+
+**Tiempos configurables (pantalla / bloqueo / suspensión):**
+* Hoy: `idle-delay 300s` (5 min), `DPMS 600s`, `sleep-inactive-ac-type 'nothing' 3600s` (no suspende, ideal para no cortar procesos).
+* Script `qtile/.config/qtile/scripts/power-timeouts.sh` (nuevo, versionado):
+  ```bash
+  ~/.config/qtile/scripts/power-timeouts.sh show    # estado actual
+  ~/.config/qtile/scripts/power-timeouts.sh short   # 5 min pantalla, sin suspensión
+  ~/.config/qtile/scripts/power-timeouts.sh long    # 30 min pantalla, sin suspensión (para procesos largos)
+  ~/.config/qtile/scripts/power-timeouts.sh off     # desactiva suspensión
+  ~/.config/qtile/scripts/power-timeouts.sh custom 1800  # 30 min custom
+  ```
+  Afecta `gsettings idle-delay`, `xset dpms` y `gsettings power sleep-inactive-*`. Usa `off` cuando dejes procesos largos y regreses sin que se suspenda.
+
+**Para activar auto-bloqueo por tiempo en el futuro (configurable, no activo aún):**
+```bash
+# Ejemplo 10 min: xss-lock ya corre, solo añade xautolock
+sudo apt install xautolock
+xautolock -time 10 -locker ~/.config/qtile/scripts/lock.sh &
+# o vía systemd: logind IdleAction=lock (ver power-timeouts.sh suspend-on)
+```
+
+**Próximo paso — fondo login GDM (pantalla al encender):**
+* GDM no usa `i3lock`; se configura aparte con `sudo nano /etc/gdm3/greeter.dconf-defaults` y el mismo `Wallpaper/` para consistencia. Se documentará cuando lo personalicemos (también `sudo` como `/usr/share/xsessions/qtile.desktop`).
+
 ##### intalacion de deamon para modo oscuro
 
 - instalcion de xsettingsd

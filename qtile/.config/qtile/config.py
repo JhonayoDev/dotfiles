@@ -745,6 +745,23 @@ def on_screen_change(event):
         pass
 
 
+@hook.subscribe.startup
+def ensure_xss_lock():
+    # Asegura xss-lock vivo tras cada reload (Super+Ctrl+r) y al iniciar
+    # startup_once no se re-ejecuta en reload, por eso se necesita aquí
+    try:
+        # si ya corre, no hace nada; si no, lo lanza con el locker del tema
+        out = subprocess.run(["pgrep", "-x", "xss-lock"], capture_output=True)
+        if out.returncode != 0:
+            subprocess.Popen(
+                ["xss-lock", "--transfer-sleep-lock", "--", os.path.expanduser("~/.config/qtile/scripts/lock.sh")],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+    except Exception:
+        pass
+
+
 @hook.subscribe.startup_complete
 def assign_groups_to_screens():
     # Asigna el grupo inicial a cada monitor al arrancar.

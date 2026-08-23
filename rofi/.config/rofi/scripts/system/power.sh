@@ -20,7 +20,7 @@ chosen=$(echo -e "$options" | rofi \
 
 case "$chosen" in
 *"Back"*) "$SCRIPTS/control_center.sh" ;;
-*"Bloquear"*) loginctl lock-session ;;
+*"Bloquear"*) "$HOME/.config/qtile/scripts/lock.sh" ;;
 *"Apagar"*) systemctl poweroff ;;
 *"Reiniciar"*) systemctl reboot ;;
 *"Cerrar sesión"*) qtile cmd-obj -o cmd -f shutdown ;;

@@ -32,5 +32,12 @@ else
         python3 "$HOME/dotfiles/scripts/mouse-buttons.py" &
     fi
 fi
+# Locker: i3lock-color (barra + blur + hora grande) — Power → Bloquear llama directo a lock.sh
+# xss-lock queda como puente para `loginctl lock-session` y suspensiones (usa lock.sh que ahora es i3lock-color)
+if command -v xss-lock >/dev/null 2>&1; then
+    if ! pgrep -x xss-lock >/dev/null 2>&1; then
+        xss-lock --transfer-sleep-lock -- "$HOME/.config/qtile/scripts/lock.sh" &
+    fi
+fi
 python3 "/home/jhonayo/dotfiles/scripts/apply-theme.py" &
 dunst &
