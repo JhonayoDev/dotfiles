@@ -499,6 +499,25 @@ chmod +x ~/dotfiles/qtile/.config/qtile/scripts/*.sh
 sudo usermod -aG video $USER
 ```
 
+- Uniformar teclas `F1-F12` como en macOS (brillo/teclado/volumen sin `Fn`)
+
+  > [!IMPORTANT]
+  > **Paso manual requerido en cada clean install** — por defecto `hid_apple` viene con `fnmode=1` (PC: `F1` es `F1`, necesitas `Fn+F1` para brillo). Para modo macOS (todo símbolo sin `Fn`, `Fn+F1` da `F1` puro para `nvim`):
+  >
+  > ```bash
+  > echo "options hid_apple fnmode=2" | sudo tee /etc/modprobe.d/hid_apple.conf
+  > sudo update-initramfs -u
+  > # efecto inmediato sin reboot (hasta próximo reinicio):
+  > echo 2 | sudo tee /sys/module/hid_apple/parameters/fnmode
+  > cat /sys/module/hid_apple/parameters/fnmode  # debe mostrar 2
+  > ```
+  >
+  > **Por qué se hace:** Antes el brillo de pantalla requería `Fn+F1/F2` pero volumen y backlight teclado funcionaban sin `Fn` (eran `XF86*` dedicadas). Para uniformar como en macOS se fijó `fnmode=2` y se bindearon en `keys.py:133` tanto `F1/F2` como `XF86MonBrightnessDown/Up` al mismo `brightness.sh`, así `F1` solo baja brillo y `Fn+F1` da `F1` para apps. Si en el futuro ves que `F1` solo no baja brillo y necesitas `Fn+F1`, verifica `cat /sys/module/hid_apple/parameters/fnmode`.
+  >
+  > `keys.py:133` ya tiene ambas variantes para cubrir transición y teclados externos.
+  >
+  > También se añadió backlight teclado `F5/F6` (`XF86KbdBrightness*` → `kbd-backlight.sh`) sin `Fn`, sin auto (ver `qtile/.config/qtile/scripts/kbd-backlight.sh`).
+
 ##### intalacion de deamon para modo oscuro
 
 - instalcion de xsettingsd

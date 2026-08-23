@@ -21,9 +21,11 @@ def make_keys(
 ):
     keys = [
         # ── Trackpad ──────────────────────────────────────────
+        # Uniformizado 2026-08-23 a modo macOS: F4 sin Fn (fnmode 2)
+        # Antes era XF86LaunchB que con fnmode 2 requería Fn+F4
         Key(
             [],
-            "XF86LaunchB",
+            "F4",
             lazy.spawn(f"{SCRIPTS}/trackpad_toggle.sh"),
             desc="Toggle trackpad",
         ),
@@ -102,47 +104,35 @@ def make_keys(
             desc="Ventana al monitor anterior",
         ),
         # ── Media ─────────────────────────────────────────────
-        Key(
-            [],
-            "XF86AudioRaiseVolume",
-            lazy.spawn(
-                'bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''
-            ),
-            desc="Volumen +",
-        ),
-        Key(
-            [],
-            "XF86AudioLowerVolume",
-            lazy.spawn(
-                'bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink -5% && notify-send --replace-id=1000 --expire-time=1200 "󰖀 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''
-            ),
-            desc="Volumen -",
-        ),
-        Key(
-            [],
-            "XF86AudioMute",
-            lazy.spawn(
-                'bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''
-            ),
-            lazy.widget["volume"].eval("self.force_update()"),
-            desc="Mute",
-        ),
+        # Uniformizado 2026-08-23 a modo macOS: F10-F12 sin Fn (fnmode 2)
+        # Se bindean ambas variantes F-keys y XF86 para cubrir fnmode y teclados externos
+        Key([], "XF86AudioRaiseVolume", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''), desc="Volumen +"),
+        Key([], "F12", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''), desc="Volumen +"),
+        Key([], "XF86AudioLowerVolume", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink -5% && notify-send --replace-id=1000 --expire-time=1200 "󰖀 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''), desc="Volumen -"),
+        Key([], "F11", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink -5% && notify-send --replace-id=1000 --expire-time=1200 "󰖀 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''), desc="Volumen -"),
+        Key([], "XF86AudioMute", lazy.spawn('bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
+        Key([], "F10", lazy.spawn('bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
         Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
+        Key([], "F8", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
         Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Anterior"),
+        Key([], "F7", lazy.spawn("playerctl previous"), desc="Anterior"),
         Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="Siguiente"),
-        # ── Brillo ────────────────────────────────────────────
-        Key(
-            [],
-            "F2",
-            lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh up"),
-            desc="Brillo +",
-        ),
-        Key(
-            [],
-            "F1",
-            lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh down"),
-            desc="Brillo -",
-        ),
+        Key([], "F9", lazy.spawn("playerctl next"), desc="Siguiente"),
+        # ── Brillo pantalla ─────────────────────────────────────
+        # Uniformizado 2026-08-23 a modo macOS: F1/F2 sin Fn (fnmode 2)
+        # Se bindean ambas variantes F1/F2 y XF86MonBrightness para cubrir
+        # el cambio de fnmode y teclados externos
+        Key([], "F2", lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh up"), desc="Brillo +"),
+        Key([], "F1", lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh down"), desc="Brillo -"),
+        Key([], "XF86MonBrightnessUp", lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh up"), desc="Brillo +"),
+        Key([], "XF86MonBrightnessDown", lazy.spawn("/home/jhonayo/.config/qtile/scripts/brightness.sh down"), desc="Brillo -"),
+        # ── Backlight teclado ───────────────────────────────────────
+        # Uniformizado 2026-08-23 a modo macOS: F5/F6 sin Fn (fnmode 2), dual-bind
+        Key([], "XF86KbdBrightnessUp", lazy.spawn("/home/jhonayo/.config/qtile/scripts/kbd-backlight.sh up"), desc="Teclado brillo +"),
+        Key([], "F6", lazy.spawn("/home/jhonayo/.config/qtile/scripts/kbd-backlight.sh up"), desc="Teclado brillo +"),
+        Key([], "XF86KbdBrightnessDown", lazy.spawn("/home/jhonayo/.config/qtile/scripts/kbd-backlight.sh down"), desc="Teclado brillo -"),
+        Key([], "F5", lazy.spawn("/home/jhonayo/.config/qtile/scripts/kbd-backlight.sh down"), desc="Teclado brillo -"),
+        Key([], "XF86KbdLightOnOff", lazy.spawn("/home/jhonayo/.config/qtile/scripts/kbd-backlight.sh toggle"), desc="Teclado toggle"),
         # ── Screenshots ───────────────────────────────────────
         Key([mod], "p", lazy.spawn("flameshot gui"), desc="Screenshot región"),
         Key(

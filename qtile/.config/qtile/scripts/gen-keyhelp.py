@@ -31,6 +31,9 @@ XF86_FRIENDLY = {
     "XF86LaunchB": "Tecla Trackpad",
     "XF86MonBrightnessUp": "F2",
     "XF86MonBrightnessDown": "F1",
+    "XF86KbdBrightnessUp": "F6",
+    "XF86KbdBrightnessDown": "F5",
+    "XF86KbdLightOnOff": "Fn+F5/F6",
     "question": "?",
     "slash": "/",
     "period": ".",
@@ -57,6 +60,10 @@ def section_icon(name: str) -> str:
         return "󰍹  MONITORES"
     if "media" in n:
         return "󰕾  AUDIO / MEDIA"
+    if "brillo pantalla" in n:
+        return "󰃠  BRILLO PANTALLA"
+    if "backlight" in n:
+        return "⌨  BACKLIGHT TECLADO"
     if "brillo" in n:
         return "󰃠  BRILLO"
     if "screenshot" in n:
@@ -182,7 +189,12 @@ def main():
             continue
         icon = section_icon(sec)
         out_lines.append(icon)
+        seen = set()
         for combo, desc in items:
+            key = (combo, desc)
+            if key in seen:
+                continue
+            seen.add(key)
             # alinea: "Super + h  → Foco izquierda"
             if desc:
                 out_lines.append(f"  {combo}  →  {desc}")
