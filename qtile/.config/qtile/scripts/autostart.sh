@@ -50,5 +50,22 @@ if command -v xss-lock >/dev/null 2>&1; then
         xss-lock --transfer-sleep-lock -- "$HOME/.config/qtile/scripts/lock.sh" &
     fi
 fi
+# Teclado backlight: por defecto apagado + dock-aware (tapa cerrada / 2x HDMI)
+# Siempre inicia en 0% si está en dock; si no, también fuerza 0 para "por defecto apagado"
+# Si prefieres que en uso normal respete el último nivel, deja solo el if de dock
+if grep -q "closed" /proc/acpi/button/lid/LID0/state 2>/dev/null || \
+   { xrandr 2>/dev/null | grep -q "^HDMI-1 connected" && xrandr 2>/dev/null | grep -q "^HDMI-2 connected"; }; then
+    brightnessctl --device "smc::kbd_backlight" set 0% -q 2>/dev/null &
+else
+    # por defecto apagado siempre (comenta esta línea si quieres que recuerde nivel en uso normal)
+    brightnessctl --device "smc::kbd_backlight" set 0% -q 2>/dev/null &
+fi
+# Watcher automático: apaga al cerrar tapa aunque lo hayas encendido después del login
+# Requiere python3-evdev y usuario en grupo input (ya OK)
+if command -v python3 >/dev/null 2>&1 && python3 -c "import evdev" 2>/dev/null; then
+    pkill -f kbd-lid-watcher.py 2>/dev/null || true
+    python3 "$HOME/.config/qtile/scripts/kbd-lid-watcher.py" >> /tmp/kbd-lid-watcher.log 2>&1 &
+fi
+
 python3 "/home/jhonayo/dotfiles/scripts/apply-theme.py" &
 dunst &
