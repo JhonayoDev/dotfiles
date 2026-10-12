@@ -10,7 +10,9 @@ Type=simple
 ExecStart=%h/dotfiles/scripts/mouse-buttons.py
 Restart=always
 RestartSec=2
-Environment=DISPLAY=:0
+# DISPLAY dinámico: Qtile en MBP 2014 usa :1 (GDM), no :0; dejar que systemd herede de dbus-update-activation-environment
+# Si se fuerza, usar :1
+Environment=DISPLAY=:1
 # Para que journalctl --user lo capture con flush
 StandardOutput=journal
 StandardError=journal
