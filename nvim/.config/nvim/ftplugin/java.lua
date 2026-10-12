@@ -131,9 +131,14 @@ local config = {
   on_attach = function(client, bufnr)
     -- Verificar que nvim-dap está disponible antes de configurarlo
 
-    -- Sincronizar runtime Java automáticamente
+    -- Sincronizar runtime Java automáticamente y re-descubrir mains
+    -- con el runtime ya aplicado (evita race discovery-vs-sync).
     vim.defer_fn(function()
       require("custom.java_runtime").sync(vim.fn.getcwd())
+      local ok_jdtls_dap, jdtls_dap = pcall(require, "jdtls.dap")
+      if ok_jdtls_dap then
+        jdtls_dap.setup_dap_main_class_configs()
+      end
     end, 500) -- 500ms para dar tiempo a que jdtls termine de iniciar
 
     local dap_ok, dap = pcall(require, "dap")
@@ -163,7 +168,8 @@ local config = {
     -- ============================================================
 
     -- ============================================================
-    -- DAP: Ejecutar directamente la 3ra configuración (main class)
+    -- DAP: Ejecutar main class con .env (selector + persistencia +
+    -- self-healing: si no hay configs, re-descubre automáticamente)
     -- ============================================================
     if dap_ok then
       local function run_config(config, env)
@@ -197,18 +203,71 @@ local config = {
         end)
       end
 
-      -- <leader>cR: usa la guardada si existe, si no abre picker
-      vim.keymap.set("n", "<leader>cRR", function()
+      local function load_env_or_warn()
         local ok_env, env_mod = pcall(require, "utils.env")
         if not ok_env then
           vim.notify("utils.env no disponible", vim.log.levels.ERROR)
+          return nil
+        end
+        return env_mod.load_env()
+      end
+
+      local function jdtls_attached()
+        if #vim.lsp.get_clients({ name = "jdtls", bufnr = vim.api.nvim_get_current_buf() }) > 0 then
+          return true
+        end
+        return #vim.lsp.get_clients({ name = "jdtls" }) > 0
+      end
+
+      -- Re-descubre mains y continúa cuando termina. Incluye timeout de
+      -- seguridad porque nvim-jdtls no invoca el callback si algún main
+      -- falla (remaining nunca llega a 0 en fetch_main_configs).
+      local function rediscover_and_continue(env, continuation)
+        if not jdtls_attached() then
+          vim.notify(
+            "jdtls no está attached — abrí un archivo Java del proyecto y esperá el import",
+            vim.log.levels.WARN
+          )
           return
         end
-        local env = env_mod.load_env()
+        vim.notify("Descubriendo main classes…", vim.log.levels.INFO)
+        local done = false
+        vim.defer_fn(function()
+          if not done then
+            done = true
+            vim.notify(
+              "El descubrimiento no terminó (¿'Could not resolve java executable' en :messages?).\n"
+                .. "Causas típicas: proyecto aún importando o runtime sin aplicar. Reintentá con <leader>cRD.",
+              vim.log.levels.WARN
+            )
+          end
+        end, 15000)
+        require("jdtls.dap").setup_dap_main_class_configs({
+          on_ready = vim.schedule_wrap(function()
+            if done then
+              return
+            end
+            done = true
+            local configs = get_launch_configs()
+            if #configs == 0 then
+              vim.notify(
+                "No se encontraron main classes.\n"
+                  .. "Causas típicas: import incompleto, error de compilación o runtime sin aplicar.\n"
+                  .. "Esperá a que termine el import y reintentá con <leader>cRD.",
+                vim.log.levels.WARN
+              )
+              return
+            end
+            continuation(configs, env)
+          end),
+        })
+      end
 
-        local configs = get_launch_configs()
+      local function run_auto(configs, env)
         if #configs == 0 then
-          vim.notify("No se encontraron main classes", vim.log.levels.WARN)
+          rediscover_and_continue(env, function(fresh, fresh_env)
+            run_auto(fresh, fresh_env)
+          end)
           return
         end
 
@@ -231,25 +290,68 @@ local config = {
         end
 
         pick_and_run(configs, env)
+      end
+
+      local function refresh_dap_configs()
+        if not jdtls_attached() then
+          vim.notify(
+            "jdtls no está attached — abrí un archivo Java del proyecto y esperá el import",
+            vim.log.levels.WARN
+          )
+          return
+        end
+        vim.notify("Descubriendo main classes…", vim.log.levels.INFO)
+        require("jdtls.dap").setup_dap_main_class_configs({
+          verbose = true,
+          on_ready = vim.schedule_wrap(function()
+            local configs = get_launch_configs()
+            vim.notify(
+              string.format("Descubrimiento completo: %d main class(es) disponible(s)", #configs),
+              vim.log.levels.INFO
+            )
+          end),
+        })
+      end
+
+      -- <leader>cRR: usa la guardada si existe, si no abre picker.
+      -- Si no hay configs, re-descubre automáticamente (self-healing).
+      vim.keymap.set("n", "<leader>cRR", function()
+        local env = load_env_or_warn()
+        if not env then
+          return
+        end
+        run_auto(get_launch_configs(), env)
       end, vim.tbl_extend("force", opts, { desc = "Launch Main Class with .env" }))
 
-      -- <leader>cRS: fuerza el picker para cambiar de main class
+      -- <leader>cRS: fuerza el picker para cambiar de main class.
+      -- Si no hay configs, re-descubre automáticamente (self-healing).
       vim.keymap.set("n", "<leader>cRS", function()
-        local ok_env, env_mod = pcall(require, "utils.env")
-        if not ok_env then
-          vim.notify("utils.env no disponible", vim.log.levels.ERROR)
+        local env = load_env_or_warn()
+        if not env then
           return
         end
-        local env = env_mod.load_env()
-
         local configs = get_launch_configs()
         if #configs == 0 then
-          vim.notify("No se encontraron main classes", vim.log.levels.WARN)
+          rediscover_and_continue(env, function(fresh, fresh_env)
+            pick_and_run(fresh, fresh_env)
+          end)
           return
         end
-
         pick_and_run(configs, env)
       end, vim.tbl_extend("force", opts, { desc = "Launch Main Class (force picker)" }))
+
+      -- <leader>cRD: fuerza el re-descubrimiento de main classes
+      -- (útil cuando el import terminó tarde o cambió el runtime).
+      vim.keymap.set(
+        "n",
+        "<leader>cRD",
+        refresh_dap_configs,
+        vim.tbl_extend("force", opts, { desc = "Refresh DAP Main Class Configs" })
+      )
+
+      vim.api.nvim_buf_create_user_command(bufnr, "JdtRefreshDapConfigs", refresh_dap_configs, {
+        desc = "Re-descubrir main classes para DAP",
+      })
 
       -- Toggle dapui (minimizar/maximizar)
       vim.keymap.set("n", "<leader>cx", function()
