@@ -60,6 +60,8 @@ def section_icon(name: str) -> str:
         return "󰍹  MONITORES"
     if "media" in n:
         return "󰕾  AUDIO / MEDIA"
+    if "mpv" in n or "musica" in n or "música" in n:
+        return "♪ MPV / MÚSICA"
     if "brillo pantalla" in n:
         return "󰃠  BRILLO PANTALLA"
     if "backlight" in n:
@@ -181,6 +183,23 @@ def main():
         sections.append(("Grupos", [
             ("Super + 1..8", "Ir al grupo N (1-4 principal, 5-8 secundario)"),
             ("Super + Shift + 1..8", "Mover ventana al grupo N"),
+        ]))
+    # Sección estática MPV: sus teclas solo valen con la ventana mpv enfocada
+    # (no son bindings Qtile, por eso no van en keys.py)
+    if not any(s[0] == "MPV" for s in sections):
+        sections.append(("MPV", [
+            ("q", "mpv: salir (ventana mpv)"),
+            ("espacio", "mpv: pausa/play (ventana mpv)"),
+            ("f", "mpv: pantalla completa (ventana mpv)"),
+            ("> / <", "mpv: siguiente/anterior tema (ventana mpv)"),
+            ("o", "mpv: muestra qué suena (ventana mpv)"),
+            ("M", "mpv: mono ↔ estéreo (ventana mpv)"),
+            ("F8 / F7 / F9", "mpv global: play-pausa / anterior / siguiente"),
+            ("ver-listas [-s]", "mpv: elige lista con fzf, suena en fondo (terminal)"),
+            ("ver-listas -h", "mpv: ayuda de comandos y atajos en consola (terminal)"),
+            ("crear-lista [URL] [nombre]", "mpv: YouTube → .m3u en listas-youtube (terminal)"),
+            ("crear-lista", "mpv: modo guiado, pide link y nombre (terminal)"),
+            ("yt \"URL\"", "mpv: un video, H.264 VA-API o 480p (terminal)"),
         ]))
 
     out_lines = []
