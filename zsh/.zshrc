@@ -295,3 +295,7 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
+
+# YouTube liviano MacBook 2014: mpv decide formato en ~/.config/mpv/mpv.conf
+# (prefiere H.264 720p por VA-API; NO pasar --ytdl-format aqui porque pisa el conf)
+alias yt='mpv'
