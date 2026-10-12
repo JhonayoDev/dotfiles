@@ -850,3 +850,74 @@ para el uso de dadbod ui en nvim despues de instalar pnpm intalar:
 ```bash
 pnpm install -g @mermaid-js/mermaid-cli
 ```
+
+### afinado termico macbook 2014 (firefox deb + mpv + qutebrowser + freetube)
+
+Guia en orden para replicar en otra distro. Baja de 100°C/fans 100% a ~65-70°C
+en el mismo uso (i7-4770HQ, solo decodifica H.264 por hardware).
+
+```bash
+# 0. base video intel + diagnostico
+sudo apt install -y i965-va-driver mesa-va-drivers vainfo
+vainfo | grep -i h264   # debe listar perfiles VAProfileH264*
+```
+
+```bash
+# 1. firefox .deb (NO snap: el snap rompe VA-API)
+sudo add-apt-repository -y ppa:mozillateam/ppa
+sudo tee /etc/apt/preferences.d/mozilla-firefox <<'EOF'
+Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
+EOF
+sudo apt update
+sudo apt install -y --allow-downgrades firefox
+# en ubuntu 24.04, permitir userns para el sandbox:
+echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/99-firefox.conf
+echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+# migrar marcadores/historial del snap (cerrar firefox antes):
+# cp -a ~/snap/firefox/common/.mozilla/firefox/*.default/places.sqlite <perfil-deb>/
+# cp -a ~/snap/firefox/common/.mozilla/firefox/*.default/favicons.sqlite <perfil-deb>/
+# NOTA: en este equipo el perfil .deb vive en ~/.config/mozilla/firefox/
+# verificar con `about:support` (Hardware H264 Decoding: Yes)
+# solo despues: sudo snap remove firefox
+```
+
+En firefox: instalar `enhanced-h264ify` (bloquear VP9+AV1), fijar YouTube en 720p,
+`about:config` → `media.ffmpeg.vaapi.enabled=true`,
+`media.hardware-video-decoding.force-enabled=true`.
+
+```bash
+# 2. reproductor liviano (modulos stow: mpv + yt-dlp via pip, NO el de apt)
+sudo apt install -y mpv
+pip install -U yt-dlp --user --break-system-packages  # el de apt (2024.x) ya no extrae nada
+# mpv.conf del repo prefiere H.264 720p por VA-API y usa cookies del perfil
+# .deb para saltar el "confirm you're not a bot":
+# AJUSTAR la ruta de cookies al hash de tu perfil en mpv/.config/mpv/mpv.conf
+# alias yt ya viene en el modulo zsh
+```
+
+```bash
+# 3. qutebrowser liviano para docs/dashboards (modulo stow: qutebrowser)
+sudo apt install -y qutebrowser python3-adblock
+# M = video actual a mpv, ,m = link a mpv, b = buscar en marcadores
+# migrar marcadores de firefox (bookmarks-*.jsonlz4 del perfil) a
+# ~/.config/qutebrowser/bookmarks/urls con formato "url titulo"
+```
+
+```bash
+# 4. freetube para el feed de youtube (sin ads ni tracking)
+cd /tmp
+curl -L -o freetube.deb https://github.com/FreeTubeApp/FreeTube/releases/download/v0.25.3-beta/freetube_0.25.3_beta_amd64.deb
+sudo apt install -y ./freetube.deb
+# Configuracion → reproductor externo mpv (ruta vacia, sin ignorar args por
+# defecto, omitir advertencias ON) + importar subs via Takeout (subscriptions.csv)
+```
+
+```bash
+# 5. aplicar dotfiles (ya incluye mpv y qutebrowser en perfil desktop)
+bash ~/dotfiles/install.sh desktop
+```
+
+Opcional extra (~10°C en idle): `sudo apt install -y thermald tlp powertop &&
+sudo systemctl enable --now thermald tlp && sudo powertop --auto-tune`.
