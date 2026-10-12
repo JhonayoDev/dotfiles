@@ -299,3 +299,21 @@ esac
 # YouTube liviano MacBook 2014: mpv decide formato en ~/.config/mpv/mpv.conf
 # (prefiere H.264 720p por VA-API; NO pasar --ytdl-format aqui porque pisa el conf)
 alias yt='mpv'
+
+# Listas YouTube → ~/Música/listas-youtube (script en dotfiles/scripts/yt-lista.sh)
+# crear-lista [URL] [nombre]  (sin args pide link y nombre)
+crear-lista() { "$HOME/dotfiles/scripts/yt-lista.sh" "$@"; }
+# ver-listas [-s|-h]  (elige con fzf y reproduce en fondo; -s = aleatorio; -h = ayuda)
+ver-listas() {
+  if [ "${1:-}" = "-h" ] || [ "${1:-}" = "ayuda" ]; then
+    sed -n '/^## Reproducir/,/^## qutebrowser/p' "$HOME/dotfiles/FAQ.md" | sed '$d'
+    return
+  fi
+  local dir="$HOME/Música/listas-youtube" sel
+  sel=$(find "$dir" -maxdepth 1 -name "*.m3u" -printf "%f\n" 2>/dev/null | sort \
+    | fzf --prompt="lista> " --height=40% --reverse --border \
+    --header="Enter=fondo · -s aleatorio · M en ventana=mono · q en ventana=salir · -h ayuda") || return
+  if [ "${1:-}" = "-s" ]; then mpv --no-terminal --shuffle "$dir/$sel" & else mpv --no-terminal "$dir/$sel" & fi
+  disown
+  echo "sonando en fondo [$!] $sel (terminal libre; q en la ventana para salir)"
+}
