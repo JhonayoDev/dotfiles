@@ -39,6 +39,13 @@ backup_conflicts() {
     local rel="${src_file#$module_path/}"
     local dest="$HOME/$rel"
 
+    # No tocar nada que ya viva dentro del repo: con carpetas plegadas de
+    # stow, $dest puede resolver dentro de DOTFILES_DIR y el backup
+    # moveria archivos versionados rompiendo repo y config viva.
+    if [[ "$(realpath -m "$dest")" == "$DOTFILES_DIR"* ]]; then
+      continue
+    fi
+
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       local bak="${dest}.bak_$(date +%Y%m%d_%H%M%S)"
       warn "Backup: $dest → $bak"
