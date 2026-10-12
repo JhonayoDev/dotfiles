@@ -894,7 +894,10 @@ pip install -U yt-dlp --user --break-system-packages  # el de apt (2024.x) ya no
 # mpv.conf del repo prefiere H.264 720p por VA-API y usa cookies del perfil
 # .deb para saltar el "confirm you're not a bot":
 # AJUSTAR la ruta de cookies al hash de tu perfil en mpv/.config/mpv/mpv.conf
-# alias yt ya viene en el modulo zsh
+# alias yt + funciones crear-lista / ver-listas (fzf) vienen en el modulo zsh:
+#   crear-lista [URL] [nombre]  → guarda en ~/Música/listas-youtube/ (.m3u + .txt)
+#   ver-listas [-s]             → elige con fzf y reproduce (-s = aleatorio)
+# Tope 400 temas por extraccion (evita baneo de IP); cambiar con YT_LIMITE=N
 ```
 
 ```bash
