@@ -94,6 +94,12 @@ profile_desktop() {
 
   section "qtile"
   stow_module qtile
+
+  section "mpv"
+  stow_module mpv
+
+  section "qutebrowser"
+  stow_module qutebrowser
 }
 
 # ─── Main ─────────────────────────────────────────────────────
