@@ -200,6 +200,7 @@ def main():
             ("crear-lista [URL] [nombre]", "mpv: YouTube → .m3u en listas-youtube (terminal)"),
             ("crear-lista", "mpv: modo guiado, pide link y nombre (terminal)"),
             ("yt \"URL\"", "mpv: un video, H.264 VA-API o 480p (terminal)"),
+            ("yt -f \"URL\"", "mpv: video en fondo, terminal libre (detach)"),
         ]))
 
     out_lines = []

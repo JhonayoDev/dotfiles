@@ -7,6 +7,7 @@ Guía paso a paso en `README.md` (sección afinado térmico).
 
 ```bash
 yt "URL"                  # un video (H.264 VA-API si hay, si no 480p)
+yt -f "URL"               # lo mismo en fondo (detach, terminal libre)
 ver-listas                # elige lista con fzf, suena en fondo, terminal libre
 ver-listas -s             # lo mismo en aleatorio
 mpv ~/Música/listas-youtube/mi-mix-radio.m3u
