@@ -298,7 +298,17 @@ esac
 
 # YouTube liviano MacBook 2014: mpv decide formato en ~/.config/mpv/mpv.conf
 # (prefiere H.264 720p por VA-API; NO pasar --ytdl-format aqui porque pisa el conf)
-alias yt='mpv'
+# yt URL = primer plano · yt -f URL... = fondo (detach, terminal libre)
+yt() {
+  if [ "${1:-}" = "-f" ]; then
+    shift
+    [ $# -gt 0 ] || { echo "Uso: yt [-f] URL..."; return 1; }
+    mpv --no-terminal "$@" & disown
+    echo "sonando en fondo [$!] (q en la ventana para salir)"
+  else
+    mpv "$@"
+  fi
+}
 
 # Listas YouTube → ~/Música/listas-youtube (script en dotfiles/scripts/yt-lista.sh)
 # crear-lista [URL] [nombre]  (sin args pide link y nombre)
