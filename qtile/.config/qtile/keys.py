@@ -37,6 +37,12 @@ def make_keys(
             desc="Launcher",
         ),
         Key(
+            [mod],
+            "w",
+            lazy.spawn(f"{SCRIPTS}/rofi-window.sh"),
+            desc="Cambiar/restaurar ventana (ej. mpv minimizado)",
+        ),
+        Key(
             [mod1],
             "space",
             lazy.spawn("/home/jhonayo/.config/rofi/scripts/control_center.sh"),
@@ -74,6 +80,12 @@ def make_keys(
         # ── Ventanas ──────────────────────────────────────────
         Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Pantalla completa"),
         Key([mod], "v", lazy.window.toggle_floating(), desc="Toggle flotante"),
+        Key(
+            [mod, "shift"],
+            "m",
+            lazy.window.toggle_minimize(),
+            desc="Minimizar/restaurar ventana",
+        ),
         Key([mod], "q", lazy.window.kill(), desc="Cerrar ventana"),
         Key([mod], "s", toggle_sticky, desc="Toggle sticky"),
         # ── Sistema ───────────────────────────────────────────
