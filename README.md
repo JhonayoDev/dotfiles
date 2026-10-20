@@ -934,7 +934,9 @@ sudo systemctl enable --now thermald tlp && sudo powertop --auto-tune`.
 sudo apt install -y build-essential git pkg-config libdbus-1-dev libpulse-dev curl
 # 3. clonar rama rust y compilar limitado por temperatura (-j4, ~6 min i7-4770HQ)
 git clone --branch linux/rust https://github.com/librepods-org/librepods.git ~/dev/librepods
-cd ~/dev/librepods/linux-rust
+cd ~/dev/librepods
+git apply ~/dotfiles/scripts/librepods-stability.patch   # no desactivar A2DP al quitarlos
+cd linux-rust
 cargo build --release -j4
 # 4. instalar binario + lanzador (el repo no publica AppImage Linux)
 install -Dm755 target/release/librepods ~/.local/bin/librepods
@@ -967,3 +969,30 @@ Requisitos de uso (sin esto "no funciona" aunque el icono esté):
 - El listener D-Bus de conexiones nuevas es poco fiable: `librepods-start.sh`
   detecta la transición a conectado y reinicia librepods si no se enganchó
   (tooltip en `L: ?`). Si el menú ANC no responde, revisar el tooltip.
+
+### Estabilidad de audio Bluetooth (AirPods)
+
+Síntomas: saltos/ruido, o "sigue reproduciendo pero no se oye" hasta
+desconectar y reconectar. Causas encontradas en los logs y sus ajustes:
+
+```bash
+# 1. WiFi en 5 GHz sin powersave (comparte antena/tiempo de radio con BT)
+nmcli connection modify "Caseta Sur 5g" wifi.powersave 2
+# 2. BT sin autosuspend USB (BCM20702): al suspenderse cae el enlace A2DP
+sudo install -Dm644 ~/dotfiles/services/udev/50-bluetooth-no-autosuspend.rules \
+  /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=usb
+# sin reiniciar, aplicarlo ya:
+echo on | sudo tee /sys/bus/usb/devices/1-8.3/power/control
+```
+
+- **WirePlumber 0.4**: módulo `wireplumber` trae `bluetooth.lua.d/51-airpods.conf`
+  (AVRCP dummy para taps) y `policy.lua.d/51-airpods-no-hfp-autoswitch.lua`
+  (evita el cambio a HFP cuando una app pide micrófono; ese cambio desmonta
+  A2DP y a veces no vuelve: `a2dp_suspend() SEP in bad state`). Para usar el
+  micrófono: `pactl set-card-profile bluez_card.<MAC> headset-head-unit`.
+- **LibrePods**: se aplica `scripts/librepods-stability.patch` antes de compilar
+  (`disconnect_when_not_wearing = false`): al sacarte ambos audífonos ya no
+  desactiva A2DP, solo pausa; evita dejar el transporte en mal estado.
+- Si el ruido/saltos persisten, probar SBC clásico (menos bitrate que SBC-XQ):
+  `pactl set-card-profile bluez_card.<MAC> a2dp-sink` y comparar.
