@@ -118,12 +118,16 @@ def make_keys(
         # ── Media ─────────────────────────────────────────────
         # Uniformizado 2026-08-23 a modo macOS: F10-F12 sin Fn (fnmode 2)
         # Se bindean ambas variantes F-keys y XF86 para cubrir fnmode y teclados externos
-        Key([], "XF86AudioRaiseVolume", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''), desc="Volumen +"),
-        Key([], "F12", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink +5% && vol=$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1) && [ "$vol" -gt 100 ] && pactl set-sink-volume $sink 100% && vol=100; notify-send --replace-id=1000 --expire-time=1200 "󰕾 Volumen" "${vol}%"\''), desc="Volumen +"),
-        Key([], "XF86AudioLowerVolume", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink -5% && notify-send --replace-id=1000 --expire-time=1200 "󰖀 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''), desc="Volumen -"),
-        Key([], "F11", lazy.spawn('bash -c \'sink=$(pactl get-default-sink) && pactl set-sink-volume $sink -5% && notify-send --replace-id=1000 --expire-time=1200 "󰖀 Volumen" "$(pactl get-sink-volume $sink | grep -oP "\\d+(?=%)" | head -1)%"\''), desc="Volumen -"),
-        Key([], "XF86AudioMute", lazy.spawn('bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
-        Key([], "F10", lazy.spawn('bash -c \'pactl set-sink-mute @DEFAULT_SINK@ toggle && notify-send --replace-id=1000 --expire-time=1200 "󰝟 Volumen" "Mute toggle"\''), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
+        # Paso normal 2% (volume.sh [paso]); con Super/F11-F12, paso fino 1%
+        Key([], "XF86AudioRaiseVolume", lazy.spawn(f"{SCRIPTS}/volume.sh up"), desc="Volumen +"),
+        Key([], "F12", lazy.spawn(f"{SCRIPTS}/volume.sh up"), desc="Volumen +"),
+        Key([], "XF86AudioLowerVolume", lazy.spawn(f"{SCRIPTS}/volume.sh down"), desc="Volumen -"),
+        Key([], "F11", lazy.spawn(f"{SCRIPTS}/volume.sh down"), desc="Volumen -"),
+        Key([mod], "F12", lazy.spawn(f"{SCRIPTS}/volume.sh up 1"), desc="Volumen + (fino 1%)"),
+        Key([mod], "F11", lazy.spawn(f"{SCRIPTS}/volume.sh down 1"), desc="Volumen - (fino 1%)"),
+        Key([], "XF86AudioMute", lazy.spawn(f"{SCRIPTS}/volume.sh mute"), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
+        Key([], "F10", lazy.spawn(f"{SCRIPTS}/volume.sh mute"), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
+        Key([mod, "shift"], "a", lazy.spawn("/home/jhonayo/.config/rofi/scripts/system/audio_apps.sh"), desc="Volumen por aplicación"),
         Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
         Key([], "F8", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
         Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Anterior"),
