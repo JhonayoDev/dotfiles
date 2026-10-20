@@ -110,6 +110,9 @@ profile_desktop() {
 
   section "wireplumber"
   stow_module wireplumber
+
+  section "librepods"
+  stow_module librepods
 }
 
 # ─── Main ─────────────────────────────────────────────────────
