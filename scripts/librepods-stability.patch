@@ -1,0 +1,13 @@
+diff --git a/linux-rust/src/media_controller.rs b/linux-rust/src/media_controller.rs
+index 5bd68b1..9859742 100644
+--- a/linux-rust/src/media_controller.rs
++++ b/linux-rust/src/media_controller.rs
+@@ -68,7 +68,7 @@ impl MediaControllerState {
+             user_played_the_media: false,
+             i_paused_the_media: false,
+             ear_detection_enabled: true,
+-            disconnect_when_not_wearing: true,
++            disconnect_when_not_wearing: false,
+             conv_original_volume: None,
+             conv_conversation_started: false,
+             playback_listener_running: false,
