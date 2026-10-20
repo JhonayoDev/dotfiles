@@ -40,6 +40,20 @@ video suelto, canal. Los privados no se pueden extraer.
 `ver-listas` usa `--no-terminal`: la consola queda libre, el control es con
 la ventana. Parar desde terminal: `pkill mpv`.
 
+## Volumen
+
+| Tecla | Hace |
+|---|---|
+| `F12` / `F11` | subir / bajar 2% el volumen general |
+| `Super+F12` / `Super+F11` | ajuste fino: 1% |
+| `F10` | mute |
+| `Super+Shift+a` | **volumen por aplicación** (mpv, Firefox, etc.) |
+
+`Super+Shift+a` lista lo que está sonando; eliges app y luego subir/bajar 5%,
+fijar un % exacto o silenciarla. Se puede dejar mpv de fondo al 20% y la clase
+al 100%. También sirve `pactl set-sink-input-volume <id> 30%` (el id sale de
+`pactl -f json list sink-inputs | jq`).
+
 ## qutebrowser (mini)
 
 `o`/`O` abrir, `b` marcadores, `f`/`F` seguir link, `M` video a mpv,
