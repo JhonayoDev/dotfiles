@@ -1,0 +1,4 @@
+# Evita que el controlador Bluetooth BCM20702 (05ac:8289) entre en autosuspend:
+# al suspenderse, el enlace A2DP puede caerse en silencio (la reproduccion sigue
+# pero no se oye nada hasta reconectar los AirPods).
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", ATTR{idProduct}=="8289", TEST=="power/control", ATTR{power/control}="on"
