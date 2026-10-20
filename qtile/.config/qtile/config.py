@@ -685,6 +685,8 @@ floating_layout = layout.Floating(
         Match(wm_class="ssh-askpass"),
         Match(title="branchdialog"),
         Match(title="pinentry"),
+        Match(wm_class="Zenity"),
+        Match(wm_class="zenity"),
     ],
 )
 
@@ -760,6 +762,29 @@ def ensure_xss_lock():
             )
     except Exception:
         pass
+
+
+@hook.subscribe.client_new
+def center_dialogs(window):
+    # Dialogs GTK (zenity: slider de volumen por app) flotan y se centran
+    try:
+        wm_class = window.window.get_wm_class()
+    except AttributeError:
+        return
+    if not wm_class or wm_class[1].lower() != "zenity":
+        return
+
+    def _center():
+        screen = window.qtile.current_screen
+        if screen is None:
+            return
+        x = screen.x + (screen.width - window.width) // 2
+        y = screen.y + (screen.height - window.height) // 2
+        window.set_position_floating(x, y)
+
+    # GTK pide el tamano final tarde: recentrar dos veces
+    window.qtile.call_later(0.1, _center)
+    window.qtile.call_later(0.6, _center)
 
 
 @hook.subscribe.startup_complete
