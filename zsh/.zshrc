@@ -296,6 +296,9 @@ case ":$PATH:" in
 esac
 # pnpm end
 
+# Rust (rustup sin tocar PATH: instalado con modify PATH = no)
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # YouTube liviano MacBook 2014: mpv decide formato en ~/.config/mpv/mpv.conf
 # (prefiere H.264 720p por VA-API; NO pasar --ytdl-format aqui porque pisa el conf)
 # yt URL = primer plano · yt -f URL... = fondo (detach, terminal libre)
