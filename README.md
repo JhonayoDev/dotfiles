@@ -1002,7 +1002,8 @@ echo on | sudo tee /sys/bus/usb/devices/1-8.3/power/control
 - `qtile/scripts/volume.sh up|down [paso] | mute`: volumen del sink por defecto.
   Teclas: `F11/F12` (2%), `Super+F11/F12` (1%), `F10` mute.
 - `rofi/scripts/system/audio_apps.sh` (`Super+Shift+a`): lista los streams de
-  PipeWire y permite subir/bajar 5%, fijar un % exacto o mutear cada app.
-  Sirve para dejar mpv de fondo (ej. 20%) mientras una clase suena al 100%.
+  PipeWire; al elegir uno abre un slider zenity (arrastrar/flechas, 1%) y
+  aplica con OK. Sin zenity usa una lista 0-100 en rofi. Sirve para dejar mpv
+  de fondo (ej. 20%) mientras una clase suena al 100%.
 - Equivalente CLI: `pactl -f json list sink-inputs | jq` para los ids y
   `pactl set-sink-input-volume <id> 30%`.

@@ -1,51 +1,53 @@
 #!/bin/bash
-# Volumen por aplicación (PipeWire) con rofi.
-# Lista los streams de reproducción activos y permite subir/bajar, fijar % o mutear.
+# Volumen por aplicación (PipeWire).
+# rofi elige la app; zenity muestra un slider (arrastrar o flechas, 1%).
+# Sin zenity: lista numérica 0-100 en rofi. Esc cierra; al aplicar vuelve
+# a la lista para ajustar otra app.
 THEME="$HOME/.config/rofi/themes/submenu.rasi"
 
-json=$(pactl -f json list sink-inputs 2>/dev/null)
-if [ -z "$json" ] || [ "$json" = "[]" ]; then
-    notify-send "Volumen por app" "No hay reproducciones activas" -t 2000
-    exit 0
-fi
+set_vol() {
+    pactl set-sink-input-volume "$1" "$2%" 2>/dev/null
+}
 
-menu=$(jq -r '
-    .[] |
-    [ .index,
-      (.properties["application.name"] // .properties["media.name"] // "app"),
-      ((.volume | to_entries | .[0].value.value_percent) // "?"),
-      ((.mute | tostring))
-    ] | @tsv' <<<"$json" | while IFS=$'\t' read -r idx name vol mute; do
-        icon="🔊"
-        [ "$mute" = "true" ] && icon="🔇"
-        printf '%s %s — %s|%s\n' "$icon" "$name" "$vol" "$idx"
-    done)
+get_vol() {
+    pactl -f json list sink-inputs 2>/dev/null | jq -r --argjson i "$1" \
+        '.[] | select(.index == $i) | .volume | to_entries[0].value.value_percent' \
+        | tr -d '%'
+}
 
-chosen=$(echo "$menu" | rofi -dmenu -i -p "🎚 Volumen por app" -theme "$THEME")
-[ -z "$chosen" ] && exit 0
-idx="${chosen##*|}"
-label="${chosen%|*}"
+while :; do
+    json=$(pactl -f json list sink-inputs 2>/dev/null)
+    if [ -z "$json" ] || [ "$json" = "[]" ]; then
+        notify-send "Volumen por app" "No hay reproducciones activas" -t 2000
+        exit 0
+    fi
 
-action=$(printf 'Subir 5%%\nBajar 5%%\nFijar…\nSilenciar/Activar' \
-    | rofi -dmenu -i -p "$label" -theme "$THEME")
-[ -z "$action" ] && exit 0
+    menu=$(jq -r '
+        .[] |
+        [ .index,
+          (.properties["application.name"] // .properties["media.name"] // "app"),
+          ((.volume | to_entries | .[0].value.value_percent) // "?"),
+          ((.mute | tostring))
+        ] | @tsv' <<<"$json" | while IFS=$'\t' read -r idx name vol mute; do
+            icon="🔊"
+            [ "$mute" = "true" ] && icon="🔇"
+            printf '%s %s — %s|%s\n' "$icon" "$name" "$vol" "$idx"
+        done)
 
-case "$action" in
-    "Subir 5%")  pactl set-sink-input-volume "$idx" +5% ;;
-    "Bajar 5%")  pactl set-sink-input-volume "$idx" -5% ;;
-    "Silenciar/Activar") pactl set-sink-input-mute "$idx" toggle ;;
-    "Fijar…")
-        current=$(pactl -f json list sink-inputs | jq -r --argjson i "$idx" \
-            '.[] | select(.index == $i) | .volume | to_entries[0].value.value_percent' \
-            | tr -d '%')
-        val=$(rofi -dmenu -i -p "Volumen % (0-150)" -theme "$THEME" -filter "$current")
-        [ -z "$val" ] && exit 0
-        [[ "$val" =~ ^[0-9]+$ ]] || { notify-send "Volumen por app" "Valor inválido" -t 2000; exit 1; }
-        [ "$val" -gt 150 ] && val=150
-        pactl set-sink-input-volume "$idx" "${val}%"
-        ;;
-    *) exit 0 ;;
-esac
+    chosen=$(echo "$menu" | rofi -dmenu -i -p "🎚 Volumen por app" -theme "$THEME")
+    [ -z "$chosen" ] && exit 0
+    idx="${chosen##*|}"
+    label="${chosen%|*}"
+    cur=$(get_vol "$idx")
+    [ -z "$cur" ] && cur=50
 
-# volver a abrir para seguir ajustando
-exec "$0"
+    if command -v zenity >/dev/null 2>&1; then
+        val=$(zenity --scale --title="Volumen por app" --text="$label" \
+            --min-value=0 --max-value=100 --value="$cur" --step=1 2>/dev/null)
+        [ -n "$val" ] && set_vol "$idx" "$val"
+    else
+        val=$(seq 0 100 | sed 's/$/%/' \
+            | rofi -dmenu -i -p "$label" -theme "$THEME" -select "${cur}%")
+        [ -n "$val" ] && set_vol "$idx" "${val%\%}"
+    fi
+done

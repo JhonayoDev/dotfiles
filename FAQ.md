@@ -49,9 +49,10 @@ la ventana. Parar desde terminal: `pkill mpv`.
 | `F10` | mute |
 | `Super+Shift+a` | **volumen por aplicación** (mpv, Firefox, etc.) |
 
-`Super+Shift+a` lista lo que está sonando; eliges app y luego subir/bajar 5%,
-fijar un % exacto o silenciarla. Se puede dejar mpv de fondo al 20% y la clase
-al 100%. También sirve `pactl set-sink-input-volume <id> 30%` (el id sale de
+`Super+Shift+a` lista lo que está sonando; al elegir una app se abre un
+**slider** (zenity): arrastra o usa flechas para 1% de precisión. Se puede dejar
+mpv de fondo al 20% y la clase al 100%. Al aplicar vuelve a la lista (Esc sale).
+CLI: `pactl set-sink-input-volume <id> 30%` (id vía
 `pactl -f json list sink-inputs | jq`).
 
 ## qutebrowser (mini)
