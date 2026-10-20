@@ -924,3 +924,46 @@ bash ~/dotfiles/install.sh desktop
 
 Opcional extra (~10°C en idle): `sudo apt install -y thermald tlp powertop &&
 sudo systemctl enable --now thermald tlp && sudo powertop --auto-tune`.
+
+### librepods (AirPods en Linux, rama rust)
+
+```bash
+# 1. toolchain sin tocar PATH de dotfiles (rustup → Customize → modify PATH: no)
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# 2. deps de linkeo + PATH (ya en modulo zsh: export PATH="$HOME/.cargo/bin:$PATH")
+sudo apt install -y build-essential git pkg-config libdbus-1-dev libpulse-dev curl
+# 3. clonar rama rust y compilar limitado por temperatura (-j4, ~6 min i7-4770HQ)
+git clone --branch linux/rust https://github.com/librepods-org/librepods.git ~/dev/librepods
+cd ~/dev/librepods/linux-rust
+cargo build --release -j4
+# 4. instalar binario + lanzador (el repo no publica AppImage Linux)
+install -Dm755 target/release/librepods ~/.local/bin/librepods
+install -Dm644 assets/icon.png ~/.local/share/icons/hicolor/256x256/apps/me.kavishdevar.librepods.png
+install -Dm644 assets/me.kavishdevar.librepods.desktop ~/.local/share/applications/
+# autostart: qtile/scripts/autostart.sh llama a scripts/librepods-start.sh, que
+# arranca snixembed y espera a org.kde.StatusNotifierWatcher antes de lanzar
+# librepods (ksni aborta si no existe el watcher), y lo reinicia si muere.
+# Log: ~/.cache/librepods.log
+# Lanzar a mano: ~/dotfiles/scripts/librepods-start.sh &
+# 5. puente SNI→XEmbed para la bandeja (sin esto librepods aborta al iniciar)
+sudo apt install -y valac libgtk-3-dev libdbusmenu-gtk3-dev libdbusmenu-glib-dev
+git clone https://git.sr.ht/~steef/snixembed /tmp/snixembed
+make -C /tmp/snixembed
+make -C /tmp/snixembed install PREFIX="$HOME/.local"  # → ~/.local/bin/snixembed
+# actualizar: cd ~/dev/librepods && git pull && cd linux-rust && cargo build --release -j4
+#   + repetir el paso 4
+```
+Notas: solo warnings al compilar (rama en desarrollo, normal). Sin CLI de control
+(es GUI + bandeja); F7/F8/F9 por `playerctl` siguen mandando. Para taps
+play/pausa en los AirPods ver módulo `wireplumber` (AVRCP).
+
+Requisitos de uso (sin esto "no funciona" aunque el icono esté):
+- **mpv no expone MPRIS**: instalar `sudo apt install mpv-mpris` para que la
+  pausa al sacarte los audífonos funcione (librepods pausa vía
+  `org.mpris.MediaPlayer2`). Cerrar y reabrir mpv tras instalarlo.
+- **Icono en modo texto**: el anillo por defecto es casi estático en 24 px.
+  `~/.config/librepods/app_settings.json` con `{"tray_text_mode": true}` para
+  ver el porcentaje (se puede cambiar desde la ventana de la app).
+- El listener D-Bus de conexiones nuevas es poco fiable: `librepods-start.sh`
+  detecta la transición a conectado y reinicia librepods si no se enganchó
+  (tooltip en `L: ?`). Si el menú ANC no responde, revisar el tooltip.
