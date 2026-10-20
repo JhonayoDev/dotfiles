@@ -34,10 +34,22 @@ while :; do
             printf '%s %s — %s|%s\n' "$icon" "$name" "$vol" "$idx"
         done)
 
-    chosen=$(echo "$menu" | rofi -dmenu -i -p "🎚 Volumen por app" -theme "$THEME")
-    [ -z "$chosen" ] && exit 0
+    chosen=$(echo "$menu" | rofi -dmenu -i -p "🎚 Volumen por app" \
+        -mesg "Alt+M: silenciar/activar la app seleccionada" \
+        -kb-custom-1 "Alt+m" -theme "$THEME")
+    rc=$?
+    # Escape / cerrar
+    [ "$rc" -eq 1 ] && exit 0
     idx="${chosen##*|}"
     label="${chosen%|*}"
+    [ -z "$idx" ] && exit 0
+
+    # Alt+M: mute toggle sin abrir el slider
+    if [ "$rc" -eq 10 ]; then
+        pactl set-sink-input-mute "$idx" toggle
+        continue
+    fi
+
     cur=$(get_vol "$idx")
     [ -z "$cur" ] && cur=50
 

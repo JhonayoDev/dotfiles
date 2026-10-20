@@ -52,6 +52,7 @@ la ventana. Parar desde terminal: `pkill mpv`.
 `Super+Shift+a` lista lo que está sonando; al elegir una app se abre un
 **slider** (zenity): arrastra o usa flechas para 1% de precisión. Se puede dejar
 mpv de fondo al 20% y la clase al 100%. Al aplicar vuelve a la lista (Esc sale).
+Con una app seleccionada, `Alt+M` la silencia/activa sin abrir el slider.
 CLI: `pactl set-sink-input-volume <id> 30%` (id vía
 `pactl -f json list sink-inputs | jq`).
 
