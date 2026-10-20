@@ -69,3 +69,9 @@ fi
 
 python3 "/home/jhonayo/dotfiles/scripts/apply-theme.py" &
 dunst &
+# LibrePods (AirPods: bateria, ANC, ear detection) — bandeja SNI vía snixembed.
+# El wrapper espera al watcher SNI (librepods aborta si no existe) y lo reinicia.
+if command -v librepods >/dev/null 2>&1; then
+    pgrep -f "librepods-start.sh" >/dev/null 2>&1 \
+        || "$HOME/dotfiles/scripts/librepods-start.sh" &
+fi

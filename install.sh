@@ -107,6 +107,9 @@ profile_desktop() {
 
   section "qutebrowser"
   stow_module qutebrowser
+
+  section "wireplumber"
+  stow_module wireplumber
 }
 
 # ─── Main ─────────────────────────────────────────────────────
