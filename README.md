@@ -1016,6 +1016,13 @@ la **fuente predeterminada en los AirPods**; en Discord/Teams elige "AirPods
 Pro" si la app no sigue el default. Al terminar, `Super+Shift+C` vuelve a A2DP
 (restaura el micro interno como default para el resto).
 
+Al conectar los AirPods, `qtile/scripts/airpods-default-mode.sh` (autostart)
+fuerza **A2DP/música** aunque la sesión anterior haya terminado en HFP, así que
+el modo por defecto es siempre música. Las notificaciones del modo llamada/
+música imitan la de conexión de blueman: mismo título **"AirPods Pro"**, mismo
+icono de audífonos y solo cambia el cuerpo ("Llamada · mic AirPods (8 kHz)" o
+"Música · A2DP estéreo").
+
 El cambio automático a HFP sigue desactivado (ver arriba) porque hacerlo con
 A2DP sonando puede dejar el transporte en mal estado. En su lugar:
 
@@ -1101,7 +1108,7 @@ install -Dm755 target/release/librepods ~/.local/bin/librepods
 # 5. Verificación
 cat /sys/bus/usb/devices/1-8.3/power/control        # on
 nmcli -g 802-11-wireless.powersave connection show "Caseta Sur 5g"  # disable
-pgrep -af "librepods-start|librepods"
+pgrep -af "librepods-start|librepods|airpods-default-mode"
 ~/.config/qtile/scripts/airpods-mode.sh status
 ```
 

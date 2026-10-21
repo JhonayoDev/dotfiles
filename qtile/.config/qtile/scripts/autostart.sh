@@ -75,3 +75,7 @@ if command -v librepods >/dev/null 2>&1; then
     pgrep -f "librepods-start.sh" >/dev/null 2>&1 \
         || "$HOME/dotfiles/scripts/librepods-start.sh" &
 fi
+# AirPods: al conectar, volver a A2DP (modo musica) por defecto.
+pgrep -f "airpods-default-mode.sh" >/dev/null 2>&1 \
+    || "$HOME/.config/qtile/scripts/airpods-default-mode.sh" &
+

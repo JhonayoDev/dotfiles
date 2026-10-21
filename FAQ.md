@@ -48,12 +48,14 @@ la ventana. Parar desde terminal: `pkill mpv`.
 | `Super+F12` / `Super+F11` | ajuste fino: 1% |
 | `F10` | mute |
 | `Super+Shift+a` | **volumen por aplicación** (mpv, Firefox, etc.) |
-| `Super+Shift+c` | AirPods: micrófono para llamadas ⇄ música (A2DP) |
+| `Super+Shift+c` | AirPods: llamada (mic AirPods) ⇄ música (A2DP); al conectar entran en música |
 
 En modo llamada el micro va por HFP y el controlador BCM20702 solo permite CVSD
 (8 kHz), así que suena opaco. Con la tapa cerrada no hay micro interno: usa
 `Super+Shift+C` (deja el micro de los AirPods como predeterminado) y elige
-"AirPods Pro" en Discord/Teams si la app no lo toma solo.
+"AirPods Pro" en Discord/Teams si la app no lo toma solo. Al conectar entran
+siempre en A2DP/música (watcher `airpods-default-mode.sh`), y los avisos de
+cambio de modo usan el mismo título/icono que la notificación de conexión.
 
 `Super+Shift+a` lista lo que está sonando; al elegir una app se abre un
 **slider** (zenity): arrastra o usa flechas para 1% de precisión. Se puede dejar

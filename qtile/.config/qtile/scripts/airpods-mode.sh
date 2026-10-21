@@ -19,11 +19,13 @@ PROFILE_MUSIC="a2dp-sink-sbc_xq"
 PROFILE_CALL="${AIRPODS_PROFILE_CALL:-headset-head-unit-cvsd}"
 LOG="$HOME/.cache/airpods-mode.log"
 
-notify() { notify-send -a AirPods "$1" "${2:-}" 2>/dev/null || true; }
+# Misma apariencia que la notificacion de conexion de blueman:
+# app blueman + icono de audifonos + titulo "AirPods Pro"; solo cambia el cuerpo.
+notify() { notify-send -a blueman -i audio-headphones "AirPods Pro" "$1" 2>/dev/null || true; }
 log() { printf '%s %s\n' "$(date -Is)" "$*" >>"$LOG" 2>/dev/null || true; }
 
 if ! command -v pactl >/dev/null; then
-    notify "pactl no encontrado"
+    notify "Error · pactl no encontrado"
     exit 1
 fi
 
@@ -38,7 +40,7 @@ if [ -z "${CARD:-}" ]; then
         echo "AirPods no conectados (sin tarjeta bluez)"
         exit 0
     fi
-    notify "AirPods no conectados" "Enciende/conecta los audifonos"
+    notify "No conectados · enciende/conecta los audifonos"
     exit 1
 fi
 
@@ -102,7 +104,7 @@ do_call() {
     case "$prof" in
     headset-head-unit*)
         set_default_source "$(airpods_source)"
-        notify "Modo llamada ya activo" "$prof (mic predeterminado)"
+        notify "Llamada ya activa · mic AirPods (8 kHz)"
         return 0
         ;;
     esac
@@ -118,7 +120,7 @@ do_call() {
             log "fallo cvsd, reconectando"
             reconnect
             profile_set "headset-head-unit-cvsd" || {
-                notify "No pude activar el microfono" "Revisa que no este conectado al iPhone"
+                notify "Sin micrófono · revisa que el iPhone no tenga la llamada"
                 log "fallo total modo llamada (perfil=$(current_profile))"
                 return 1
             }
@@ -134,13 +136,13 @@ do_call() {
     set_default_source "$src"
     info=$(source_info)
     log "modo llamada: $(current_profile) | $info | default=$src"
-    notify "Modo llamada: mic AirPods" "$info (predeterminado)"
+    notify "Llamada · mic AirPods (8 kHz)"
 }
 
 do_music() {
     if [ "$(current_profile)" = "$PROFILE_MUSIC" ]; then
         restore_default_source
-        notify "Modo musica ya activo" "$PROFILE_MUSIC"
+        notify "Música · A2DP ya activo"
         return 0
     fi
 
@@ -150,7 +152,7 @@ do_music() {
             reconnect
             if ! profile_set "$PROFILE_MUSIC"; then
                 profile_set "a2dp-sink" || {
-                    notify "No pude volver a A2DP" "Reconecta los AirPods"
+                    notify "Sin audio · reconecta los AirPods"
                     log "fallo total modo musica (perfil=$(current_profile))"
                     return 1
                 }
@@ -160,7 +162,7 @@ do_music() {
 
     restore_default_source
     log "modo musica: $(current_profile)"
-    notify "Modo musica: A2DP" "$(current_profile)"
+    notify "Música · A2DP estéreo"
 }
 
 case "${1:-toggle}" in
