@@ -113,6 +113,30 @@ profile_desktop() {
 
   section "librepods"
   stow_module librepods
+
+  install_system_files
+}
+
+
+# ─── Archivos de sistema (udev / modprobe) ───────────────────
+install_system_files() {
+  section "sistema (udev + modprobe)"
+
+  local udev_src="$DOTFILES_DIR/services/udev/50-bluetooth-no-autosuspend.rules"
+  local mod_src="$DOTFILES_DIR/services/modprobe/btusb-no-autosuspend.conf"
+
+  if [[ -t 0 ]] && command -v sudo >/dev/null 2>&1; then
+    sudo install -Dm644 "$udev_src" /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+    sudo install -Dm644 "$mod_src" /etc/modprobe.d/btusb-no-autosuspend.conf
+    sudo udevadm control --reload
+    sudo udevadm trigger --subsystem-match=usb
+    success "Reglas udev/modprobe instaladas (BT sin autosuspend)"
+  else
+    warn "Sin terminal interactiva: instala a mano los archivos de sistema"
+    echo "  sudo install -Dm644 $udev_src /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"
+    echo "  sudo install -Dm644 $mod_src /etc/modprobe.d/btusb-no-autosuspend.conf"
+    echo "  sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=usb"
+  fi
 }
 
 # ─── Main ─────────────────────────────────────────────────────

@@ -978,12 +978,21 @@ desconectar y reconectar. Causas encontradas en los logs y sus ajustes:
 ```bash
 # 1. WiFi en 5 GHz sin powersave (comparte antena/tiempo de radio con BT)
 nmcli connection modify "Caseta Sur 5g" wifi.powersave 2
-# 2. BT sin autosuspend USB (BCM20702): al suspenderse cae el enlace A2DP
+# 2. BT sin autosuspend USB (BCM20702): al suspenderse cae el enlace A2DP.
+#    El driver btusb arranca con enable_autosuspend=Y y re-activa el autosuspend
+#    al probe, pisando la regla udev; por eso el parametro del modulo es la
+#    solucion que persiste (install.sh desktop ya copia ambos archivos).
 sudo install -Dm644 ~/dotfiles/services/udev/50-bluetooth-no-autosuspend.rules \
   /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+sudo install -Dm644 ~/dotfiles/services/modprobe/btusb-no-autosuspend.conf \
+  /etc/modprobe.d/btusb-no-autosuspend.conf
 sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=usb
-# sin reiniciar, aplicarlo ya:
+# sin reiniciar, aplicarlo ya (el modulo se lee al reconectar el controlador):
+echo 0 | sudo tee /sys/module/btusb/parameters/enable_autosuspend
 echo on | sudo tee /sys/bus/usb/devices/1-8.3/power/control
+# verificar: debe imprimir 0 y on
+cat /sys/module/btusb/parameters/enable_autosuspend
+cat /sys/bus/usb/devices/1-8.3/power/control
 ```
 
 - **WirePlumber 0.4**: módulo `wireplumber` trae `bluetooth.lua.d/51-airpods.conf`
