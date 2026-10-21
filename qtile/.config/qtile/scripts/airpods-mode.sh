@@ -12,7 +12,10 @@ set -u
 
 CARD="${AIRPODS_CARD:-bluez_card.90_62_3F_5D_0E_1A}"
 PROFILE_MUSIC="a2dp-sink-sbc_xq"
-PROFILE_CALL="headset-head-unit"
+# Este combo AirPods Pro + BCM20702 solo negocia CVSD (8 kHz); pedir
+# headset-head-unit (mSBC/16 kHz) termina igual en cvsd. Se puede forzar con
+# AIRPODS_PROFILE_CALL=headset-head-unit si en el futuro negocian mSBC.
+PROFILE_CALL="${AIRPODS_PROFILE_CALL:-headset-head-unit-cvsd}"
 LOG="$HOME/.cache/airpods-mode.log"
 
 notify() { notify-send -a AirPods "$1" "${2:-}" 2>/dev/null || true; }
@@ -65,9 +68,9 @@ reconnect() {
 }
 
 source_info() {
-    pactl -f json list sources 2>/dev/null |
-        jq -r '.[] | select(.name | startswith("bluez_source")) | "\(.name)  \(.sample_spec.rate) Hz  \(.sample_spec.channels)ch"' 2>/dev/null |
-        head -n1
+    # pactl json falla con nombres UTF-8 invalidos de PipeWire; usar texto plano
+    pactl list sources short 2>/dev/null |
+        awk '/bluez_input/ {printf "%s  %s %s", $4, $5, $6; exit}'
 }
 
 do_call() {
@@ -84,9 +87,12 @@ do_call() {
     playerctl -a pause >/dev/null 2>&1 || true
 
     if ! profile_set "$PROFILE_CALL"; then
-        log "fallo perfil $PROFILE_CALL, reconectando"
-        reconnect
-        if ! profile_set "$PROFILE_CALL"; then
+        # Sin reconectar (cortaba el audio): si el perfil elegido no aplica,
+        # caer a CVSD directo y solo reconectar como ultimo recurso.
+        log "fallo perfil $PROFILE_CALL, probando cvsd sin reconectar"
+        if ! profile_set "headset-head-unit-cvsd"; then
+            log "fallo cvsd, reconectando"
+            reconnect
             profile_set "headset-head-unit-cvsd" || {
                 notify "No pude activar el microfono" "Revisa que no este conectado al iPhone"
                 log "fallo total modo llamada (perfil=$(current_profile))"

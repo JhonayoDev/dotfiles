@@ -1,8 +1,16 @@
 diff --git a/linux-rust/src/media_controller.rs b/linux-rust/src/media_controller.rs
-index 5bd68b1..9859742 100644
+index 5bd68b1..ce6f90f 100644
 --- a/linux-rust/src/media_controller.rs
 +++ b/linux-rust/src/media_controller.rs
-@@ -68,7 +68,7 @@ impl MediaControllerState {
+@@ -29,6 +29,7 @@ struct OwnedCardInfo {
+     index: u32,
+     proplist: Proplist,
+     profiles: Vec<OwnedCardProfileInfo>,
++    active_profile: Option<String>,
+ }
+ 
+ #[derive(Clone, Debug)]
+@@ -68,7 +69,7 @@ impl MediaControllerState {
              user_played_the_media: false,
              i_paused_the_media: false,
              ear_detection_enabled: true,
@@ -11,3 +19,87 @@ index 5bd68b1..9859742 100644
              conv_original_volume: None,
              conv_conversation_started: false,
              playback_listener_running: false,
+@@ -146,6 +147,15 @@ impl MediaController {
+                     info!("Media playback started but buds not in ear, skipping takeover");
+                     continue;
+                 }
++                if let Some(profile) = self.current_profile().await
++                    && profile.starts_with("headset")
++                {
++                    info!(
++                        "Media playback started but HFP profile is active ({}), skipping A2DP takeover",
++                        profile
++                    );
++                    continue;
++                }
+                 info!("Media playback started, taking ownership and activating a2dp");
+                 let _ = control_tx.send((
+                     crate::bluetooth::aacp::ControlCommandIdentifiers::OwnsConnection,
+@@ -327,6 +337,25 @@ impl MediaController {
+             }
+         }
+ 
++        let active_profile = tokio::task::spawn_blocking(move || {
++            get_card_info_list_sync()
++                .iter()
++                .find(|c| c.index == current_device_index.unwrap_or(u32::MAX))
++                .and_then(|c| c.active_profile.clone())
++        })
++        .await
++        .unwrap_or(None);
++
++        if let Some(profile) = &active_profile
++            && profile.starts_with("headset")
++        {
++            info!(
++                "HFP profile active ({}), not switching to A2DP (call in progress)",
++                profile
++            );
++            return;
++        }
++
+         if !self.is_a2dp_profile_available().await {
+             warn!("A2DP profile not available, attempting to restart WirePlumber");
+             if self.restart_wire_plumber().await {
+@@ -635,6 +664,30 @@ impl MediaController {
+             .unwrap_or(None)
+     }
+ 
++    async fn current_profile(&self) -> Option<String> {
++        let (mut device_index, mac) = {
++            let state = self.state.lock().await;
++            (state.device_index, state.connected_device_mac.clone())
++        };
++
++        if device_index.is_none() {
++            device_index = self.get_audio_device_index(&mac).await;
++            if let Some(idx) = device_index {
++                self.state.lock().await.device_index = Some(idx);
++            }
++        }
++
++        let idx = device_index?;
++        tokio::task::spawn_blocking(move || {
++            get_card_info_list_sync()
++                .iter()
++                .find(|c| c.index == idx)
++                .and_then(|c| c.active_profile.clone())
++        })
++        .await
++        .unwrap_or(None)
++    }
++
+     pub async fn deactivate_a2dp_profile(&self) {
+         debug!("Entering deactivate_a2dp_profile");
+         let mut state = self.state.lock().await;
+@@ -924,6 +977,10 @@ fn get_card_info_list_sync() -> Vec<OwnedCardInfo> {
+                     index: item.index,
+                     proplist: item.proplist.clone(),
+                     profiles,
++                    active_profile: item
++                        .active_profile
++                        .as_ref()
++                        .and_then(|p| p.name.as_ref().map(|n| n.to_string())),
+                 });
+             }
+         }

@@ -1004,8 +1004,13 @@ cat /sys/bus/usb/devices/1-8.3/power/control
 ### Llamadas con el micrófono de los AirPods (Discord/Teams/Zoom)
 
 Los AirPods no pueden A2DP (estéreo) y HFP (micrófono) a la vez: durante la
-llamada el audio pasa a mono, 16 kHz si negocia mSBC o 8 kHz en CVSD. Es
-inherente al protocolo, no un fallo de la config.
+llamada el audio pasa a mono. En este equipo el adaptador BCM20702 sí tiene
+transporte mSBC/eSCO, pero los AirPods solo negocian **CVSD 8 kHz** (pedir
+`headset-head-unit`/mSBC termina en `headset-head-unit-cvsd`), así que el micro
+suena más opaco que en macOS. Es inherente al protocolo/equipo, no a la config.
+Para la mejor calidad en llamadas: quédate en modo música (A2DP) y elige el
+**micro interno del Mac** como entrada en Discord/Teams; así escuchas en estéreo
+y no se cambia de perfil.
 
 El cambio automático a HFP sigue desactivado (ver arriba) porque hacerlo con
 A2DP sonando puede dejar el transporte en mal estado. En su lugar:
@@ -1021,8 +1026,14 @@ Flujo: `Super+Shift+c` **antes** de entrar a la llamada; en Discord/Teams
 elegir micrófono "AirPods Pro" (y salida AirPods si quieres oír por ellos). Al
 terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
 
-- Si `status` muestra 8000 Hz, quedó en CVSD (peor); el script intenta mSBC
-  (16000 Hz) primero. Si falla el perfil, reintenta CVSD y reconecta.
+- `status` muestra 8000 Hz porque es CVSD; es el máximo de estos AirPods.
+  Se puede forzar otro perfil con `AIRPODS_PROFILE_CALL=headset-head-unit`,
+  pero en este combo cae igual a CVSD.
+- El script pausa la música y cambia de perfil **sin desconectar** los AirPods.
+  Solo reconecta como último recurso si el perfil HFP no aplica.
+- `scripts/librepods-stability.patch` también evita que librepods fuerce A2DP o
+  reinicie WirePlumber mientras hay un perfil HFP activo (eso cortaba la
+  llamada).
 - Multipoint: si el iPhone tiene la llamada, Linux no recibe el micrófono;
   desconecta el iPhone o desactiva el cambio automático en el teléfono.
 - Algunas apps enumeran dispositivos al arrancar: cambia el perfil antes de
