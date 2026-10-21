@@ -1008,3 +1008,7 @@ echo on | sudo tee /sys/bus/usb/devices/1-8.3/power/control
   silencia/activa la app seleccionada.
 - Equivalente CLI: `pactl -f json list sink-inputs | jq` para los ids y
   `pactl set-sink-input-volume <id> 30%`.
+- Dependencias: `jq` (parseo) y `zenity` (slider). Si falta zenity se usa la
+  lista 0-100 en rofi. El diálogo flota y se centra por la regla
+  `Match(wm_class="Zenity")` de `floating_layout` y el hook `center_dialogs`
+  en `config.py`.
