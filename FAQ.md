@@ -48,6 +48,7 @@ la ventana. Parar desde terminal: `pkill mpv`.
 | `Super+F12` / `Super+F11` | ajuste fino: 1% |
 | `F10` | mute |
 | `Super+Shift+a` | **volumen por aplicación** (mpv, Firefox, etc.) |
+| `Super+Shift+c` | AirPods: micrófono para llamadas ⇄ música (A2DP) |
 
 `Super+Shift+a` lista lo que está sonando; al elegir una app se abre un
 **slider** (zenity): arrastra o usa flechas para 1% de precisión. Se puede dejar

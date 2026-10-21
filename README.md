@@ -1000,6 +1000,35 @@ cat /sys/bus/usb/devices/1-8.3/power/control
   (evita el cambio a HFP cuando una app pide micrófono; ese cambio desmonta
   A2DP y a veces no vuelve: `a2dp_suspend() SEP in bad state`). Para usar el
   micrófono: `pactl set-card-profile bluez_card.<MAC> headset-head-unit`.
+
+### Llamadas con el micrófono de los AirPods (Discord/Teams/Zoom)
+
+Los AirPods no pueden A2DP (estéreo) y HFP (micrófono) a la vez: durante la
+llamada el audio pasa a mono, 16 kHz si negocia mSBC o 8 kHz en CVSD. Es
+inherente al protocolo, no un fallo de la config.
+
+El cambio automático a HFP sigue desactivado (ver arriba) porque hacerlo con
+A2DP sonando puede dejar el transporte en mal estado. En su lugar:
+
+```bash
+qtile/scripts/airpods-mode.sh call     # pausa, cambia a headset-head-unit y verifica
+qtile/scripts/airpods-mode.sh music    # vuelve a a2dp-sink-sbc_xq
+qtile/scripts/airpods-mode.sh toggle   # alterna (Super+Shift+c)
+qtile/scripts/airpods-mode.sh status   # perfil, fuente y frecuencia actuales
+```
+
+Flujo: `Super+Shift+c` **antes** de entrar a la llamada; en Discord/Teams
+elegir micrófono "AirPods Pro" (y salida AirPods si quieres oír por ellos). Al
+terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
+
+- Si `status` muestra 8000 Hz, quedó en CVSD (peor); el script intenta mSBC
+  (16000 Hz) primero. Si falla el perfil, reintenta CVSD y reconecta.
+- Multipoint: si el iPhone tiene la llamada, Linux no recibe el micrófono;
+  desconecta el iPhone o desactiva el cambio automático en el teléfono.
+- Algunas apps enumeran dispositivos al arrancar: cambia el perfil antes de
+  abrirlas/entrar a la llamada.
+- Para llamadas largas/calidad, un micro USB suele sonar mejor que HFP; esto es
+  el máximo que da el protocolo con los AirPods.
 - **LibrePods**: se aplica `scripts/librepods-stability.patch` antes de compilar
   (`disconnect_when_not_wearing = false`): al sacarte ambos audífonos ya no
   desactiva A2DP, solo pausa; evita dejar el transporte en mal estado.
