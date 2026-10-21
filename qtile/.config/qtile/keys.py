@@ -128,7 +128,7 @@ def make_keys(
         Key([], "XF86AudioMute", lazy.spawn(f"{SCRIPTS}/volume.sh mute"), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
         Key([], "F10", lazy.spawn(f"{SCRIPTS}/volume.sh mute"), lazy.widget["volume"].eval("self.force_update()"), desc="Mute"),
         Key([mod, "shift"], "a", lazy.spawn("/home/jhonayo/.config/rofi/scripts/system/audio_apps.sh"), desc="Volumen por aplicación"),
-        Key([mod, "shift"], "c", lazy.spawn(f"{SCRIPTS}/airpods-mode.sh toggle"), desc="AirPods: micrófono (llamada) / música"),
+        Key([mod, "shift"], "c", lazy.spawn(f"{SCRIPTS}/airpods-mode.sh toggle"), desc="AirPods: llamada (mic AirPods 8 kHz) / música"),
         Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
         Key([], "F8", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
         Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Anterior"),

@@ -1010,10 +1010,11 @@ settings USB 0–5; mSBC transparente necesita Alt6 (~60 bytes por paquete), as�
 que PipeWire cae siempre a `headset-head-unit-cvsd`. No es limitación de los
 AirPods ni de la config. Comprobación: `lsusb -d 05ac:8289 -v | grep bAlternateSetting`.
 
-Para la mejor experiencia sin comprar nada: quédate en modo música (A2DP) y
-elige el **micro interno del Mac** como entrada en Discord/Teams. Así escuchas
-en estéreo, hablas con el array del Mac (mejor que CVSD) y no se cambia de
-perfil. El script tiene `best` justo para eso (deja A2DP + mic interno).
+Uso recomendado (tapa cerrada / modo dock): el micro interno no sirve, así que
+se usa el de los AirPods. `Super+Shift+C` pausa la música, cambia a HFP y deja
+la **fuente predeterminada en los AirPods**; en Discord/Teams elige "AirPods
+Pro" si la app no sigue el default. Al terminar, `Super+Shift+C` vuelve a A2DP
+(restaura el micro interno como default para el resto).
 
 El cambio automático a HFP sigue desactivado (ver arriba) porque hacerlo con
 A2DP sonando puede dejar el transporte en mal estado. En su lugar:
@@ -1022,13 +1023,13 @@ A2DP sonando puede dejar el transporte en mal estado. En su lugar:
 qtile/scripts/airpods-mode.sh call     # pausa, cambia a headset-head-unit y verifica
 qtile/scripts/airpods-mode.sh music    # vuelve a a2dp-sink-sbc_xq
 qtile/scripts/airpods-mode.sh toggle   # alterna (Super+Shift+c)
-qtile/scripts/airpods-mode.sh best     # A2DP + mic del Mac (mejor calidad)
 qtile/scripts/airpods-mode.sh status   # perfil, fuente, default y frecuencia
 ```
 
-Flujo: `Super+Shift+c` **antes** de entrar a la llamada; en Discord/Teams
-elegir micrófono "AirPods Pro" (y salida AirPods si quieres oír por ellos). Al
-terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
+Flujo: `Super+Shift+c` **antes** de entrar a la llamada. El script deja el micro
+de los AirPods como fuente por defecto; en la app elige "AirPods Pro" si no lo
+toma solo (algunas enumeran dispositivos al abrirse). Al terminar,
+`Super+Shift+c` vuelve a A2DP y reanuda la música cuando quieras.
 
 - `status` muestra 8000 Hz porque es CVSD; es el máximo con este adaptador.
   Si algún día se usa un dongle Bluetooth con Alt6 (ej. RTL8761B), mSBC (16 kHz)
@@ -1043,8 +1044,9 @@ terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
   desconecta el iPhone o desactiva el cambio automático en el teléfono.
 - Algunas apps enumeran dispositivos al arrancar: cambia el perfil antes de
   abrirlas/entrar a la llamada.
-- Para llamadas largas/calidad, un micro USB suele sonar mejor que HFP; esto es
-  el máximo que da el protocolo con los AirPods.
+- Con la tapa cerrada no hay micro interno utilizable; el de los AirPods a
+  8 kHz es lo máximo con este adaptador. Un micro USB o un dongle BT con Alt6
+  son las únicas mejoras reales.
 - **LibrePods**: se aplica `scripts/librepods-stability.patch` antes de compilar
   (`disconnect_when_not_wearing = false`): al sacarte ambos audífonos ya no
   desactiva A2DP, solo pausa; evita dejar el transporte en mal estado.
@@ -1066,3 +1068,43 @@ terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
   lista 0-100 en rofi. El diálogo flota y se centra por la regla
   `Match(wm_class="Zenity")` de `floating_layout` y el hook `center_dialogs`
   en `config.py`.
+
+## Reinstalación manual (resumen)
+
+Checklist para replicar en otra instalación (el detalle está en cada sección):
+
+```bash
+# 1. Paquetes base y audio
+sudo apt install git stow jq zenity playerctl mpv-mpris wireplumber pipewire-pulse
+# 2. Dotfiles: stow de qtile/rofi/wireplumber/librepods (y udev/modprobe si hay TTY)
+git clone git@github.com:JhonayoDev/dotfiles.git ~/dotfiles
+bash ~/dotfiles/install.sh desktop
+
+# 3. Sistema: BT sin autosuspend + WiFi 5 GHz sin powersave
+sudo install -Dm644 ~/dotfiles/services/udev/50-bluetooth-no-autosuspend.rules \
+  /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+sudo install -Dm644 ~/dotfiles/services/modprobe/btusb-no-autosuspend.conf \
+  /etc/modprobe.d/btusb-no-autosuspend.conf
+sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=usb
+nmcli connection modify "Caseta Sur 5g" wifi.powersave 2
+
+# 4. Bandeja + LibrePods (ver sección librepods para deps de compilación)
+sudo apt install valac libgtk-3-dev libdbusmenu-gtk3-dev libdbusmenu-glib-dev
+git clone https://git.sr.ht/~steef/snixembed /tmp/snixembed && make -C /tmp/snixembed
+make -C /tmp/snixembed install PREFIX="$HOME/.local"
+git clone --branch linux/rust https://github.com/librepods-org/librepods.git ~/dev/librepods
+sudo apt install -y build-essential pkg-config libdbus-1-dev libpulse-dev
+cd ~/dev/librepods && git apply ~/dotfiles/scripts/librepods-stability.patch
+cd linux-rust && cargo build --release -j4
+install -Dm755 target/release/librepods ~/.local/bin/librepods
+
+# 5. Verificación
+cat /sys/bus/usb/devices/1-8.3/power/control        # on
+nmcli -g 802-11-wireless.powersave connection show "Caseta Sur 5g"  # disable
+pgrep -af "librepods-start|librepods"
+~/.config/qtile/scripts/airpods-mode.sh status
+```
+
+Llamadas: `Super+Shift+C` (mic AirPods, CVSD 8 kHz), elegir "AirPods Pro" en
+Discord/Teams si hace falta; `Super+I` muestra los atajos. El audio de
+música usa A2DP SBC-XQ; la única mejora real del micro es un dongle BT con Alt6.

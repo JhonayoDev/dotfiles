@@ -29,12 +29,15 @@ fi
 
 # Si la MAC cambia, cae al primer bluez_card disponible
 if ! pactl list cards short 2>/dev/null | awk '{print $2}' | grep -qx "$CARD"; then
-    CARD=$(pactl -f json list cards 2>/dev/null |
-        jq -r '.[] | select(.name | startswith("bluez_card.")) | .name' 2>/dev/null |
-        head -n1)
+    CARD=$(pactl list cards short 2>/dev/null |
+        awk '$2 ~ /^bluez_card\./ {print $2; exit}')
 fi
 
 if [ -z "${CARD:-}" ]; then
+    if [ "${1:-toggle}" = "status" ]; then
+        echo "AirPods no conectados (sin tarjeta bluez)"
+        exit 0
+    fi
     notify "AirPods no conectados" "Enciende/conecta los audifonos"
     exit 1
 fi
@@ -74,12 +77,32 @@ source_info() {
         awk '/bluez_input/ {printf "%s  %s %s", $4, $5, $6; exit}'
 }
 
+airpods_source() {
+    pactl list sources short 2>/dev/null | awk '/bluez_input/ {print $2; exit}'
+}
+
+set_default_source() {
+    local src="$1"
+    [ -n "$src" ] && pactl set-default-source "$src" 2>/dev/null || true
+}
+
+restore_default_source() {
+    # Al volver a A2DP la fuente bluez desaparece: dejar el micro interno
+    case "$(pactl get-default-source 2>/dev/null)" in
+    bluez_input.*)
+        set_default_source "$(pactl list sources short 2>/dev/null |
+            awk '/alsa_input/ {print $2; exit}')"
+        ;;
+    esac
+}
+
 do_call() {
     local prof
     prof=$(current_profile)
     case "$prof" in
-    headset-head-unit | headset-head-unit-cvsd)
-        notify "Modo llamada ya activo" "$prof"
+    headset-head-unit*)
+        set_default_source "$(airpods_source)"
+        notify "Modo llamada ya activo" "$prof (mic predeterminado)"
         return 0
         ;;
     esac
@@ -102,14 +125,21 @@ do_call() {
         fi
     fi
 
-    local info
+    local info src
+    for _ in $(seq 10); do
+        src=$(airpods_source)
+        [ -n "$src" ] && break
+        sleep 0.1
+    done
+    set_default_source "$src"
     info=$(source_info)
-    log "modo llamada: $(current_profile) | $info"
-    notify "Modo llamada: mic activo" "$info"
+    log "modo llamada: $(current_profile) | $info | default=$src"
+    notify "Modo llamada: mic AirPods" "$info (predeterminado)"
 }
 
 do_music() {
     if [ "$(current_profile)" = "$PROFILE_MUSIC" ]; then
+        restore_default_source
         notify "Modo musica ya activo" "$PROFILE_MUSIC"
         return 0
     fi
@@ -128,6 +158,7 @@ do_music() {
         fi
     fi
 
+    restore_default_source
     log "modo musica: $(current_profile)"
     notify "Modo musica: A2DP" "$(current_profile)"
 }
@@ -135,17 +166,6 @@ do_music() {
 case "${1:-toggle}" in
 call) do_call ;;
 music) do_music ;;
-best)
-    # Mejor calidad sin cambiar de perfil: mic del Mac + AirPods en A2DP
-    do_music
-    src=$(pactl list sources short 2>/dev/null | awk '/alsa_input/ {print $2; exit}')
-    if [ -n "$src" ]; then
-        pactl set-default-source "$src" 2>/dev/null || true
-        notify "Mic del Mac + AirPods estéreo" "Entrada: $src"
-    else
-        notify "No encontré el micrófono interno"
-    fi
-    ;;
 toggle)
     case "$(current_profile)" in
     headset-head-unit*) do_music ;;
@@ -155,15 +175,15 @@ toggle)
 status)
     prof=$(current_profile)
     case "$prof" in
-    headset-head-unit*) note="HFP CVSD 8 kHz (limite del adaptador BCM20702)" ;;
-    a2dp-*) note="A2DP; en llamadas usa 'best' o el micro del Mac" ;;
+    headset-head-unit*) note="HFP CVSD 8 kHz (limite BCM20702); mic predeterminado" ;;
+    a2dp-*) note="A2DP; para llamadas: Super+Shift+C (mic AirPods)" ;;
     *) note="sin perfil de audio" ;;
     esac
     printf 'card:    %s\nperfil:  %s\nfuente:  %s\ndefault: %s\nnota:    %s\n' \
         "$CARD" "$prof" "$(source_info)" "$(pactl get-default-source 2>/dev/null)" "$note"
     ;;
 *)
-    echo "Uso: $0 [call|music|best|toggle|status]" >&2
+    echo "Uso: $0 [call|music|toggle|status]" >&2
     exit 2
     ;;
 esac
