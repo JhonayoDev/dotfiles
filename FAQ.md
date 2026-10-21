@@ -50,9 +50,9 @@ la ventana. Parar desde terminal: `pkill mpv`.
 | `Super+Shift+a` | **volumen por aplicación** (mpv, Firefox, etc.) |
 | `Super+Shift+c` | AirPods: micrófono para llamadas ⇄ música (A2DP) |
 
-En modo llamada el micro va por HFP y estos AirPods solo negocian CVSD (8 kHz),
-así que suena opaco; para mejor calidad usa el micro interno del Mac y deja los
-AirPods en A2DP (modo música).
+En modo llamada el micro va por HFP y el controlador BCM20702 solo permite CVSD
+(8 kHz), así que suena opaco; para mejor calidad usa `airpods-mode.sh best`
+(mic interno del Mac + AirPods en A2DP) o elige el micro interno en la app.
 
 `Super+Shift+a` lista lo que está sonando; al elegir una app se abre un
 **slider** (zenity): arrastra o usa flechas para 1% de precisión. Se puede dejar

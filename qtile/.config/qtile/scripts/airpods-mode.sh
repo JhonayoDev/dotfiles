@@ -12,9 +12,10 @@ set -u
 
 CARD="${AIRPODS_CARD:-bluez_card.90_62_3F_5D_0E_1A}"
 PROFILE_MUSIC="a2dp-sink-sbc_xq"
-# Este combo AirPods Pro + BCM20702 solo negocia CVSD (8 kHz); pedir
-# headset-head-unit (mSBC/16 kHz) termina igual en cvsd. Se puede forzar con
-# AIRPODS_PROFILE_CALL=headset-head-unit si en el futuro negocian mSBC.
+# El controlador BCM20702 no tiene el alternate setting USB (Alt6) que
+# necesita el mSBC transparente; PipeWire cae siempre a CVSD (8 kHz). Con un
+# dongle que si lo soporte (ej. RTL8761B) se puede usar headset-head-unit.
+# Override: AIRPODS_PROFILE_CALL=headset-head-unit
 PROFILE_CALL="${AIRPODS_PROFILE_CALL:-headset-head-unit-cvsd}"
 LOG="$HOME/.cache/airpods-mode.log"
 
@@ -134,6 +135,17 @@ do_music() {
 case "${1:-toggle}" in
 call) do_call ;;
 music) do_music ;;
+best)
+    # Mejor calidad sin cambiar de perfil: mic del Mac + AirPods en A2DP
+    do_music
+    src=$(pactl list sources short 2>/dev/null | awk '/alsa_input/ {print $2; exit}')
+    if [ -n "$src" ]; then
+        pactl set-default-source "$src" 2>/dev/null || true
+        notify "Mic del Mac + AirPods estéreo" "Entrada: $src"
+    else
+        notify "No encontré el micrófono interno"
+    fi
+    ;;
 toggle)
     case "$(current_profile)" in
     headset-head-unit*) do_music ;;
@@ -141,11 +153,17 @@ toggle)
     esac
     ;;
 status)
-    printf 'card:    %s\nperfil:  %s\nfuente:  %s\n' \
-        "$CARD" "$(current_profile)" "$(source_info)"
+    prof=$(current_profile)
+    case "$prof" in
+    headset-head-unit*) note="HFP CVSD 8 kHz (limite del adaptador BCM20702)" ;;
+    a2dp-*) note="A2DP; en llamadas usa 'best' o el micro del Mac" ;;
+    *) note="sin perfil de audio" ;;
+    esac
+    printf 'card:    %s\nperfil:  %s\nfuente:  %s\ndefault: %s\nnota:    %s\n' \
+        "$CARD" "$prof" "$(source_info)" "$(pactl get-default-source 2>/dev/null)" "$note"
     ;;
 *)
-    echo "Uso: $0 [call|music|toggle|status]" >&2
+    echo "Uso: $0 [call|music|best|toggle|status]" >&2
     exit 2
     ;;
 esac

@@ -1004,13 +1004,16 @@ cat /sys/bus/usb/devices/1-8.3/power/control
 ### Llamadas con el micrófono de los AirPods (Discord/Teams/Zoom)
 
 Los AirPods no pueden A2DP (estéreo) y HFP (micrófono) a la vez: durante la
-llamada el audio pasa a mono. En este equipo el adaptador BCM20702 sí tiene
-transporte mSBC/eSCO, pero los AirPods solo negocian **CVSD 8 kHz** (pedir
-`headset-head-unit`/mSBC termina en `headset-head-unit-cvsd`), así que el micro
-suena más opaco que en macOS. Es inherente al protocolo/equipo, no a la config.
-Para la mejor calidad en llamadas: quédate en modo música (A2DP) y elige el
-**micro interno del Mac** como entrada en Discord/Teams; así escuchas en estéreo
-y no se cambia de perfil.
+llamada el audio pasa a mono. Causa de que solo haya **CVSD 8 kHz**: el
+controlador Bluetooth interno (Broadcom BCM20702) solo expone los alternate
+settings USB 0–5; mSBC transparente necesita Alt6 (~60 bytes por paquete), así
+que PipeWire cae siempre a `headset-head-unit-cvsd`. No es limitación de los
+AirPods ni de la config. Comprobación: `lsusb -d 05ac:8289 -v | grep bAlternateSetting`.
+
+Para la mejor experiencia sin comprar nada: quédate en modo música (A2DP) y
+elige el **micro interno del Mac** como entrada en Discord/Teams. Así escuchas
+en estéreo, hablas con el array del Mac (mejor que CVSD) y no se cambia de
+perfil. El script tiene `best` justo para eso (deja A2DP + mic interno).
 
 El cambio automático a HFP sigue desactivado (ver arriba) porque hacerlo con
 A2DP sonando puede dejar el transporte en mal estado. En su lugar:
@@ -1019,16 +1022,18 @@ A2DP sonando puede dejar el transporte en mal estado. En su lugar:
 qtile/scripts/airpods-mode.sh call     # pausa, cambia a headset-head-unit y verifica
 qtile/scripts/airpods-mode.sh music    # vuelve a a2dp-sink-sbc_xq
 qtile/scripts/airpods-mode.sh toggle   # alterna (Super+Shift+c)
-qtile/scripts/airpods-mode.sh status   # perfil, fuente y frecuencia actuales
+qtile/scripts/airpods-mode.sh best     # A2DP + mic del Mac (mejor calidad)
+qtile/scripts/airpods-mode.sh status   # perfil, fuente, default y frecuencia
 ```
 
 Flujo: `Super+Shift+c` **antes** de entrar a la llamada; en Discord/Teams
 elegir micrófono "AirPods Pro" (y salida AirPods si quieres oír por ellos). Al
 terminar, `Super+Shift+c` para volver a A2DP y reanudar la música.
 
-- `status` muestra 8000 Hz porque es CVSD; es el máximo de estos AirPods.
-  Se puede forzar otro perfil con `AIRPODS_PROFILE_CALL=headset-head-unit`,
-  pero en este combo cae igual a CVSD.
+- `status` muestra 8000 Hz porque es CVSD; es el máximo con este adaptador.
+  Si algún día se usa un dongle Bluetooth con Alt6 (ej. RTL8761B), mSBC (16 kHz)
+  funciona sin tocar nada más: la config ya tiene `bluez5.enable-msbc = true`.
+  Alternativa: `AIRPODS_PROFILE_CALL=headset-head-unit` para forzarlo.
 - El script pausa la música y cambia de perfil **sin desconectar** los AirPods.
   Solo reconecta como último recurso si el perfil HFP no aplica.
 - `scripts/librepods-stability.patch` también evita que librepods fuerce A2DP o
